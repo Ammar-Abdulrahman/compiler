@@ -1,0 +1,172 @@
+void main() {
+  runApp(const MyApp());
+  int x = 0 ;
+  int y = 890;
+  String w = "fdsadaf";
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return GetMaterialApp(
+      title: "FlutterDemo",
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: const MyHomePage(),
+    );
+  }
+}
+
+class MyHomePage extends StatefulWidget {
+  const MyHomePage({Key? key}) : super(key: key);
+
+  @override
+  State<MyHomePage> createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+
+
+  AppController appController=Get.put(AppController());
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        body: Padding(
+            padding:  EdgeInsets.all(80),
+            child: Center(
+              child: Column(
+                children: [
+                  Expanded(
+                      child: Container(
+                          height: 200,
+                          width: 400,
+                          // decoration: BoxDecoration(border: Border.all()),
+                          child: MaterialButton(
+                            onPressed: () {
+                              appController.setValues(0);
+                            },
+                            child: Column(
+                              children: [
+                                Text(appController.Names[0],style: TextStyle(fontSize: 18)),
+                                Expanded(child: Image.network(appController.Images[0]))
+                              ],
+                            ),
+                          ))),
+                  SizedBox(height: 20,),
+                  Expanded(
+                      child: Container(
+                          height: 200,
+                          width: 200,
+                          // decoration: BoxDecoration(border: Border.all()),
+                          child: MaterialButton(
+                            onPressed: () {
+                              appController.setValues(1);
+                            },
+                            child: Column(
+                              children: [
+                                Text(appController.Names[1],style: TextStyle(fontSize: 18),),
+                                Expanded(child: Image.network(appController.Images[1]))
+                              ],
+                            ),
+                          ))),
+                  SizedBox(height: 20,),
+                  Expanded(
+                      child: Container(
+                          height: 200,
+                          width: 200,
+                          // decoration: BoxDecoration(border: Border.all()),
+                          child: MaterialButton(
+                            onPressed: () {
+                              appController.setValues(2);
+                            },
+                            child: Column(
+                              children: [
+                                Text(appController.Names[2],style: TextStyle(fontSize: 18)),
+                                Expanded(child: Image.network(appController.Images[2]))
+                              ],
+                            ),
+                          ))),
+                  SizedBox(height: 20,),
+                  Expanded(
+                      child: Container(
+                          height: 200,
+                          // width:100,
+                          width: 200,
+                          // decoration: BoxDecoration(border: Border.all()),
+                          child: MaterialButton(
+                            onPressed: () {
+                              appController.setValues(3);
+                            },
+                            child: Column(
+                              children: [
+                                Text(appController.Names[3],style: TextStyle(fontSize: 18)),
+                                Expanded(child: Image.network(appController.Images[3]))
+                              ],
+                            ),
+                          )))
+                ],
+              ),
+            )));
+  }
+}
+
+class InProductScreen extends StatelessWidget {
+  InProductScreen({Key? key}) : super(key: key);
+  final appController=Get.find<AppController>();
+  @override
+  Widget build(BuildContext context) {
+    return  Scaffold(
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            height: 400,
+            child: Center(
+              child: Column(
+                children: [
+                  Text(appController.name,style: TextStyle(fontSize: 30),),
+                  SizedBox(height: 80,),
+                  Expanded(child: Image.network(appController.image))
+                ],
+              ),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+}
+
+class AppController extends GetxController{
+  int x = 978965;
+  String name = "a";
+  String image = 'https://picsum.photos/250?image=4';
+  Rx<int> count=0.obs;
+
+  List<String> Names = [
+  "naser",
+  "lady",
+  "ali",
+  "ammar",
+  ];
+
+  List<String> Images = [
+  "https://picsum.photos/250?image=1",
+  "https://picsum.photos/250?image=2",
+  "https://picsum.photos/250?image=3",
+  "https://picsum.photos/250?image=4"]
+  ;
+
+  int setValues(int index){
+  name=Names[index];
+  int x = 0;
+  image=Images[index];
+  Get.to(InProductScreen());
+  return ;
+  }
+
+}
+
