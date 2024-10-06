@@ -30,4 +30,11 @@ public class Scaffold extends Node {
                 ", \ntexts=" + texts +
                 "\n}";
     }
+
+    @Override
+    public String generateCode() {
+        return "<body>"
+                +body.generateCode()
+                +"</body>" ;
+    }
 }

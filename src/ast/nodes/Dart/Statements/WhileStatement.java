@@ -31,4 +31,9 @@ public class WhileStatement extends Node {
                 ", \nblock=" + block +
                 "\n}";
     }
+
+    @Override
+    public String generateCode() {
+        return "while ( "+expression.generateCode() +" )" + block.generateCode();
+    }
 }

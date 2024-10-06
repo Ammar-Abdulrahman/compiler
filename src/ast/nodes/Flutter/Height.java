@@ -20,4 +20,9 @@ public class Height extends Node {
                 "\nnum=" + num +
                 "\n}";
     }
+
+    @Override
+    public String generateCode() {
+        return String.valueOf(num)+"px";
+    }
 }

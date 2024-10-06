@@ -19,4 +19,9 @@ public class Icon extends Node {
                 "\nvalue='" + Icon_value + '\'' +
                 "\n}";
     }
+
+    @Override
+    public String generateCode() {
+        return "";
+    }
 }

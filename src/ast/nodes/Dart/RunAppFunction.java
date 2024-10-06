@@ -19,4 +19,9 @@ public class RunAppFunction extends Node {
                 "\nClass=" + istedaaaclass +
                 "\n}";
     }
+
+    @Override
+    public String generateCode() {
+        return istedaaaclass.generateCode();
+    }
 }

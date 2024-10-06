@@ -42,4 +42,19 @@ public class SwitchStatement extends Node {
                 ", \ndefaultCase=" + defaultCase +
                 "\n}";
     }
+
+    @Override
+    public String generateCode() {
+        String x = "" , y = "";
+        if (switchCase != null){
+            for (int i =0 ;i<switchCase.size();i++){
+                x = x + switchCase.get(i).generateCode();
+            }
+        }
+        if (defaultCase != null ){
+            y = defaultCase.generateCode();
+        }
+        return "switch ( " + expression.generateCode() + ") " +
+                "{\n" +x + y +"\n}\n";
+    }
 }

@@ -20,4 +20,10 @@ public class Center extends Node {
                 "\nchild=" + child +
                 "\n}";
     }
+    @Override
+    public String generateCode() {
+        return "<div"+ " style=' align-items: center; '" +">"
+                +child.generateCode()
+                +"</div>";
+    }
 }

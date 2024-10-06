@@ -1,4 +1,4 @@
-// Generated from java-escape by ANTLR 4.11.1
+// Generated from D:/ITE/4. Fourth Year/2022-2023/«·›’· «·À«‰Ì/ﬂÊ„»«Ì·—2/compiler/src/antlr\DartParser.g4 by ANTLR 4.12.0
 package antlr;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
@@ -41,29 +41,17 @@ public interface DartParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitIstedaaaclass(DartParser.IstedaaaclassContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link DartParser#callfunction}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitCallfunction(DartParser.CallfunctionContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link DartParser#widgetclass}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitWidgetclass(DartParser.WidgetclassContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link DartParser#classes}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitClasses(DartParser.ClassesContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link DartParser#regularclass}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitRegularclass(DartParser.RegularclassContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link DartParser#controllerClass}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitControllerClass(DartParser.ControllerClassContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link DartParser#stlessclass}.
 	 * @param ctx the parse tree
@@ -88,6 +76,24 @@ public interface DartParserVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitStateclass(DartParser.StateclassContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link DartParser#classes}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitClasses(DartParser.ClassesContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link DartParser#regularclass}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitRegularclass(DartParser.RegularclassContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link DartParser#controllerClass}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitControllerClass(DartParser.ControllerClassContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link DartParser#declare}.
 	 * @param ctx the parse tree

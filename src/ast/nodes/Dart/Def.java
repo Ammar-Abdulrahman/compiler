@@ -9,14 +9,6 @@ public class Def extends Node {
     Declare declare;
     ControllerPutFind controllerPutFind;
 
-    public ControllerPutFind getControllerPutFind() {
-        return controllerPutFind;
-    }
-
-    public void setControllerPutFind(ControllerPutFind controllerPutFind) {
-        this.controllerPutFind = controllerPutFind;
-    }
-
     public Function getFunction() {
         return function;
     }
@@ -33,22 +25,48 @@ public class Def extends Node {
         this.declare = declare;
     }
 
+    public ControllerPutFind getControllerPutFind() {
+        return controllerPutFind;
+    }
+
+    public void setControllerPutFind(ControllerPutFind controllerPutFind) {
+        this.controllerPutFind = controllerPutFind;
+    }
+
     @Override
     public String toString() {
+        String x = "" , y ="" , z ="";
         if (function != null){
-            return "\nDef{" +
+             y =  "\nDef{" +
                 "\nfunction=" + function +
                     "\n}";
         }
-        else if (declare != null) {
-            return "\nDef{" +
+        if (declare != null) {
+             x = "\nDef{" +
                     ", \ndeclare=" + declare +
                     "\n}";
-        } else if (controllerPutFind != null) {
-            return "\nDef{" +
+        } if (controllerPutFind != null) {
+            z = "\nDef{" +
                     ", \ncontrollerPutFind=" + controllerPutFind +
                     "\n}";
         }
-        return null;
+        return x + y + z;
+    }
+
+    @Override
+    public String generateCode() {
+        if (function != null)
+        {
+            return function.generateCode();
+        }
+        if(declare != null)
+        {
+            return declare.generateCode();
+        }
+        if (controllerPutFind != null)
+        {
+            return controllerPutFind.generateCode();
+        }
+        return "";
     }
 }

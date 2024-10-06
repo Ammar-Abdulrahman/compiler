@@ -1,4 +1,4 @@
-// Generated from java-escape by ANTLR 4.11.1
+// Generated from D:/ITE/4. Fourth Year/2022-2023/«·›’· «·À«‰Ì/ﬂÊ„»«Ì·—2/compiler/src/antlr\DartParser.g4 by ANTLR 4.12.0
 package antlr;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 
@@ -58,6 +58,16 @@ public interface DartParserListener extends ParseTreeListener {
 	 */
 	void exitIstedaaaclass(DartParser.IstedaaaclassContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link DartParser#callfunction}.
+	 * @param ctx the parse tree
+	 */
+	void enterCallfunction(DartParser.CallfunctionContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link DartParser#callfunction}.
+	 * @param ctx the parse tree
+	 */
+	void exitCallfunction(DartParser.CallfunctionContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link DartParser#widgetclass}.
 	 * @param ctx the parse tree
 	 */
@@ -67,36 +77,6 @@ public interface DartParserListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitWidgetclass(DartParser.WidgetclassContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link DartParser#classes}.
-	 * @param ctx the parse tree
-	 */
-	void enterClasses(DartParser.ClassesContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link DartParser#classes}.
-	 * @param ctx the parse tree
-	 */
-	void exitClasses(DartParser.ClassesContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link DartParser#regularclass}.
-	 * @param ctx the parse tree
-	 */
-	void enterRegularclass(DartParser.RegularclassContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link DartParser#regularclass}.
-	 * @param ctx the parse tree
-	 */
-	void exitRegularclass(DartParser.RegularclassContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link DartParser#controllerClass}.
-	 * @param ctx the parse tree
-	 */
-	void enterControllerClass(DartParser.ControllerClassContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link DartParser#controllerClass}.
-	 * @param ctx the parse tree
-	 */
-	void exitControllerClass(DartParser.ControllerClassContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link DartParser#stlessclass}.
 	 * @param ctx the parse tree
@@ -137,6 +117,36 @@ public interface DartParserListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitStateclass(DartParser.StateclassContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link DartParser#classes}.
+	 * @param ctx the parse tree
+	 */
+	void enterClasses(DartParser.ClassesContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link DartParser#classes}.
+	 * @param ctx the parse tree
+	 */
+	void exitClasses(DartParser.ClassesContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link DartParser#regularclass}.
+	 * @param ctx the parse tree
+	 */
+	void enterRegularclass(DartParser.RegularclassContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link DartParser#regularclass}.
+	 * @param ctx the parse tree
+	 */
+	void exitRegularclass(DartParser.RegularclassContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link DartParser#controllerClass}.
+	 * @param ctx the parse tree
+	 */
+	void enterControllerClass(DartParser.ControllerClassContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link DartParser#controllerClass}.
+	 * @param ctx the parse tree
+	 */
+	void exitControllerClass(DartParser.ControllerClassContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link DartParser#declare}.
 	 * @param ctx the parse tree

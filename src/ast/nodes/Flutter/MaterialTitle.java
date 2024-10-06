@@ -18,4 +18,9 @@ public class MaterialTitle extends Node {
                 "\nstringLine=" + stringLine +
                 "\n}";
     }
+
+    @Override
+    public String generateCode() {
+        return "";
+    }
 }

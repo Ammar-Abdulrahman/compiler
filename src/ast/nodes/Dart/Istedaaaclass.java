@@ -21,4 +21,13 @@ public class Istedaaaclass extends Node {
                 "\nvar='" + var + '\'' +
                 "\n}";
     }
+
+    @Override
+    public String generateCode() {
+        if(var != null)
+        {
+            return var+"();";
+        }
+        return "";
+    }
 }

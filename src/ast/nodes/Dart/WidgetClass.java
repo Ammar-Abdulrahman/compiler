@@ -37,5 +37,17 @@ public class WidgetClass extends Node {
         }
         return null;
     }
+
+    @Override
+    public String generateCode() {
+        String x = " " , y = " ";
+        if (stlessClass != null) {
+            x = stlessClass.generateCode() ;
+        }
+        if (stfulClass != null) {
+             y = stfulClass.generateCode();
+        }
+        return x + y;
+    }
 }
 

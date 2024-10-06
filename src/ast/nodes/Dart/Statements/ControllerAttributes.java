@@ -5,6 +5,7 @@ import ast.nodes.Node;
 import java.util.ArrayList;
 
 public class ControllerAttributes extends Node {
+
     private ArrayList<String> vars;
 
     public ArrayList<String> getVars() {
@@ -20,5 +21,12 @@ public class ControllerAttributes extends Node {
         return "\nControllerAttributes{" +
                 "vars=" + vars +
                 "\n}";
+    }
+
+    @Override
+    public String generateCode() {
+        String x = "";
+
+        return vars.get(0) + "->" + vars.get(1) + ";\n" ;
     }
 }

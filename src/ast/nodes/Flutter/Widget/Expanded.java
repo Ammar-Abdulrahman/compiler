@@ -21,4 +21,11 @@ public class Expanded extends Node {
                 "\nchild=" + child +
                 "\n}";
     }
+
+    @Override
+    public String generateCode() {
+        return "<div style='display:flex; flex:1; margin:10px'>"
+                +child.generateCode()
+                + "</div>";
+    }
 }

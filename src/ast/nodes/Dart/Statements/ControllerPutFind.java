@@ -35,9 +35,21 @@ public class ControllerPutFind extends Node {
                             ", var2='" + vars.get(1) + '\'' + ", CallClass=" + istedaaaclass +
                     "\n}";
         }
-        return
-                "\nControllerPutFind{"+
-                        ", vars='" + null + '\'' + ", CallClass=" + istedaaaclass +
-                        "\n}";
+        return "";
+//                "\nControllerPutFind{"+
+//                        ", vars='null" + '\'' + ", CallClass=" + istedaaaclass +
+//                        "\n}";
+    }
+
+    @Override
+    public String generateCode() {
+        String x = "" , y = "";
+        if(istedaaaclass != null){
+            x = "final " + vars.get(0) + " = Get -> put ( " + istedaaaclass.generateCode() +");\n" ;
+        }
+        else{
+            y = vars.get(0) + " " + vars.get(1) + " = Get -> find < " + vars.get(1) +" > ();\n" ;
+        }
+        return x+y ;
     }
 }

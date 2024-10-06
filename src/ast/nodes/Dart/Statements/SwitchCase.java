@@ -30,4 +30,9 @@ public class SwitchCase extends Node {
                 ", \nstatement=" + statement +
                 "\n}";
     }
+
+    @Override
+    public String generateCode() {
+        return "case " + expression.generateCode() + ":" + statement.generateCode() + "break;" ;
+    }
 }

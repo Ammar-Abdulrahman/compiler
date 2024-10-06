@@ -2,7 +2,7 @@ package SymbolTable;
 
 public class VarSymbol {
     private String key;
-    private String value;
+    private Object value;
     private String type;
 
     public String getKey() {
@@ -13,11 +13,11 @@ public class VarSymbol {
         this.key = key;
     }
 
-    public String getValue() {
+    public Object getValue() {
         return value;
     }
 
-    public void setValue(String value) {
+    public void setValue(Object value) {
         this.value = value;
     }
 
@@ -27,8 +27,5 @@ public class VarSymbol {
 
     public void setType(String type) {
         this.type = type;
-    }
-    public String print(){
-        return  ("key: " + key + ", value: " + value + ", type: " + type);
     }
 }

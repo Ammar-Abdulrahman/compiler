@@ -1,6 +1,6 @@
 package ast.nodes;
 
-public class Node {
+public class Node implements CodeGenerate {
     private int line;
     private int col;
     public void setLine(int line) {
@@ -17,4 +17,8 @@ public class Node {
             return col;
         }
 
+    @Override
+    public String generateCode() {
+        return "";
+    }
 }

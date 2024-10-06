@@ -20,4 +20,16 @@ public class Navigation extends Node {
                 "\nCallClass=" + istedaaaclass +
                 "\n}";
     }
+
+    @Override
+    public String generateCode() {
+        String x = "" , y = "";
+        if (istedaaaclass != null){
+            x = "Get -> to ("+istedaaaclass.generateCode() + ");" ;
+        }
+        else {
+            x = " Get -> back();";
+        }
+        return x+y;
+    }
 }

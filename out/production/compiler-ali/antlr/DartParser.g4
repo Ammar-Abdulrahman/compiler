@@ -8,51 +8,43 @@ imports:IMPORT STRING_LINE  SEMICOLON;
 
 //-------------main function
 
-main:type MAIN RIGHTKAOS  LEFTKAOS RIGHTCURLY (declare)*
-     runappfunction (declare)*  LEFTCURLY;
+main:type MAIN RIGHTKAOS LEFTKAOS RIGHTCURLY (declare|statement)*
+            runappfunction (declare|statement)* LEFTCURLY;
 
 runappfunction:RUNAPP RIGHTKAOS CONST istedaaaclass LEFTKAOS SEMICOLON;
 
 istedaaaclass: VARIABLE  RIGHTKAOS  LEFTKAOS;
-
+callfunction: VARIABLE RIGHTKAOS  VARIABLE? (COMMA  VARIABLE)* LEFTKAOS SEMICOLON;
 
 //-------------classes
 
 widgetclass:stlessclass|stfulclass;
 
-classes:controllerClass|regularclass|widgetclass;
-
-
-regularclass:CLAS VARIABLE (EXTENDS VARIABLE)?  RIGHTCURLY (def)*  constructor? (def)* LEFTCURLY;
-controllerClass:CLAS VARIABLE EXTENDS GETXCONTROLLER  RIGHTCURLY (def)*  constructor? (def)* LEFTCURLY;
 stlessclass:CLAS VARIABLE EXTENDS   STATELESS   RIGHTCURLY stlessclassbody LEFTCURLY LEFTCURLY ;
-
-stlessclassbody: constructor?  (def)* buildfunction
-                 (def)*  ;
+stlessclassbody: constructor?  (def)* (callfunction)* buildfunction (def)*  ;
 
 stfulclass:CLAS VARIABLE EXTENDS   STATEFUL   RIGHTCURLY constructor?
-             (def)* createstate     LEFTCURLY   stateclass
+             (def)* (callfunction)* createstate     LEFTCURLY   stateclass
              (def)*   LEFTCURLY ;
 
 stateclass: CLAS VARIABLE EXTENDS
             STATE OPEN_C VARIABLE CLOSE_C   RIGHTCURLY
             (def)* buildfunction   (def)*   LEFTCURLY;
 
+classes:controllerClass|regularclass|widgetclass;
 
+
+regularclass:CLAS VARIABLE (EXTENDS VARIABLE)?  RIGHTCURLY (def)* (callfunction)*  constructor?  (def)* LEFTCURLY;
+controllerClass:CLAS VARIABLE EXTENDS GETXCONTROLLER  RIGHTCURLY (def)* (callfunction)* constructor? (def)* LEFTCURLY;
 
 //--------------declaration
-
-
-
 declare:list|definevariable|defineRXvariable;
 
 defineRXvariable:RXINT VARIABLE EQUAL NUM DOT OBS SEMICOLON;
 
 definevariable: FINAL? type VARIABLE (EQUAL (STRING_LINE | NUM)?)? SEMICOLON ;
 
-list:LIST VARIABLE  (EQUAL RIGHTSQUARE STRING_LINE( COMMA STRING_LINE )*)? COMMA? LEFTSQUARE SEMICOLON;
-
-
+list:LIST VARIABLE  (EQUAL RIGHTSQUARE STRING_LINE( COMMA STRING_LINE )*)? COMMA? LEFTSQUARE? SEMICOLON;
 
 
 statement:
@@ -83,7 +75,8 @@ controllerPutFind: (VARIABLE VARIABLE EQUAL GET DOT PUT RIGHTKAOS istedaaaclass 
 block:RIGHTCURLY (statement|def)*   (RETURN (VARIABLE| NUM)?SEMICOLON)? LEFTCURLY;
 
 changingvalue:VARIABLE (DOT VALUE)? INCREAMENTOPERATOR SEMICOLON
-              |VARIABLE (COMPOUNDASSIGMENTOPERATOR|EQUAL) expr SEMICOLON ;
+              |VARIABLE (COMPOUNDASSIGMENTOPERATOR|EQUAL) expr SEMICOLON
+              |VARIABLE EQUAL STRING_LINE SEMICOLON;
 
  print:
  PRINT RIGHTKAOS (STRING_LINE|VARIABLE) LEFTKAOS SEMICOLON ;
@@ -147,7 +140,7 @@ expression:
         ;
 
 
-buildfunction:OVERRIDEWORD  WIDGET BUILD BUILDCONTEXT RIGHTCURLY RETURN    widget  SEMICOLON ;
+buildfunction:OVERRIDEWORD  WIDGET BUILD BUILDCONTEXT RIGHTCURLY RETURN   widget  SEMICOLON ;
 
 constructor:(CONST? VARIABLE RIGHTKAOS RIGHTCURLY KEYCAPITAL QUESTIONMARK
             KEYSMALL LEFTCURLY LEFTKAOS  TWOPOINTSABOVEEACHOTHER  SUPER

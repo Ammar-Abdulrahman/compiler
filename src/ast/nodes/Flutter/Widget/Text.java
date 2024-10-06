@@ -4,7 +4,7 @@ import ast.nodes.Node;
 
 import java.util.ArrayList;
 
-public class Text extends Node {
+public class Text extends Widget {
     private ArrayList <String> vars  = new ArrayList<>();
     private String stringLine;
 
@@ -46,5 +46,13 @@ public class Text extends Node {
                 "\nvars=" + vars +
                 ",\nnums=" + nums +
                 "\n}";
+    }
+
+    @Override
+    public String generateCode() {
+           String x = "";
+           for (int i =0 ; i<vars.size() ; i++ )
+           { x = x +vars.get(i) + " ";}
+        return "<span>"+ x  +"</span>";
     }
 }

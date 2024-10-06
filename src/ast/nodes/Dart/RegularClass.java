@@ -1,5 +1,6 @@
 package ast.nodes.Dart;
 
+import SymbolTable.ClassSymbol;
 import ast.nodes.Dart.Statements.Declare;
 import ast.nodes.Node;
 
@@ -8,6 +9,25 @@ import java.util.ArrayList;
 public class RegularClass extends Node {
     private String var;
     private Constructor constructor;
+    ClassSymbol classSymbol;
+    ArrayList<Def> defs ;
+    ArrayList<CallFunction> callFunctions ;
+
+    public ArrayList<CallFunction> getCallFunctions() {
+        return callFunctions;
+    }
+
+    public void setCallFunctions(ArrayList<CallFunction> callFunctions) {
+        this.callFunctions = callFunctions;
+    }
+
+    public ClassSymbol getClassSymbol() {
+        return classSymbol;
+    }
+
+    public void setClassSymbol(ClassSymbol classSymbol) {
+        this.classSymbol = classSymbol;
+    }
 
     public ArrayList<Def> getDefs() {
         return defs;
@@ -17,7 +37,7 @@ public class RegularClass extends Node {
         this.defs = defs;
     }
 
-    ArrayList<Def> defs = new ArrayList<>();
+
 
     public String getVar() {
         return var;
@@ -41,9 +61,33 @@ public class RegularClass extends Node {
     @Override
     public String toString() {
         return "\nRegularClass{" +
-                "\nvar='" + var + '\'' +
-                ", \nconstructor=" + constructor +
-                ", \ndefs=" + defs +
+                "\nvar= '" + var + '\'' +
+                ", \nconstructor= " + constructor +
+                ", \ndefs= " + defs +
+                ", \ncallFunctions= " + callFunctions +
                 "\n}";
+    }
+
+    @Override
+    public String generateCode() {
+        String x = "" , y = "" , z = "";
+        if(defs != null){
+            for (int i=0 ; i<defs.size();i++ ){
+                x = x + defs.get(i).generateCode();
+            }
+        }
+        if (constructor != null){
+            y = constructor.generateCode();
+        }
+        if (callFunctions != null){
+            for (int i=0;i<callFunctions.size();i++){
+                z = z + callFunctions.get(i).generateCode();
+            }
+        }
+        return  "<?php \n" +
+                "class "+ var + " extends " + var + " { \n"
+                + x + y + z
+                +"\n}"
+                +"\n?>\n";
     }
 }

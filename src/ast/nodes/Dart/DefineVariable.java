@@ -1,23 +1,35 @@
 package ast.nodes.Dart;
 
+import SymbolTable.VarSymbol;
 import ast.nodes.Dart.Statements.Type;
 import ast.nodes.Node;
 
+import java.util.ArrayList;
+
 public class DefineVariable extends Node {
     private String var;
-    private  int num;
+    private int num;
     private Type type;
-    private String value;
+    Object value;
+    VarSymbol varSymbol;
+    private String stringLine;
 
-    public String getValue() {
+    public VarSymbol getVarSymbol() {
+        return varSymbol;
+    }
+
+    public Object getValue() {
         return value;
     }
 
-    public void setValue(String value) {
+    public void setValue(Object value) {
         this.value = value;
     }
 
-    private String stringLine;
+    public void setVarSymbol(VarSymbol varSymbol) {
+        this.varSymbol = varSymbol;
+    }
+
 
     public String getStringLine() {
         return stringLine;
@@ -59,5 +71,16 @@ public class DefineVariable extends Node {
                 ",\nnum=" + num +
                 ",\nstringLine=" + stringLine +
                 "\n}";
+    }
+
+    @Override
+    public String generateCode() {
+        if ( stringLine != null && var != null ){
+            return "$"+var +" = "+ stringLine+";"+"\n";
+        }
+         else if ( String.valueOf(num) != null && var != null ){
+            return "$"+var +" = "+ num+";"+"\n";
+        }
+        return "";
     }
 }

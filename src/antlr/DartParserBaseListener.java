@@ -1,4 +1,4 @@
-// Generated from java-escape by ANTLR 4.11.1
+// Generated from D:/ITE/4. Fourth Year/2022-2023/«·›’· «·À«‰Ì/ﬂÊ„»«Ì·—2/compiler/src/antlr\DartParser.g4 by ANTLR 4.12.0
 package antlr;
 
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -77,6 +77,18 @@ public class DartParserBaseListener implements DartParserListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterCallfunction(DartParser.CallfunctionContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitCallfunction(DartParser.CallfunctionContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterWidgetclass(DartParser.WidgetclassContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -84,42 +96,6 @@ public class DartParserBaseListener implements DartParserListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitWidgetclass(DartParser.WidgetclassContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterClasses(DartParser.ClassesContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitClasses(DartParser.ClassesContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterRegularclass(DartParser.RegularclassContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitRegularclass(DartParser.RegularclassContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterControllerClass(DartParser.ControllerClassContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitControllerClass(DartParser.ControllerClassContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -168,6 +144,42 @@ public class DartParserBaseListener implements DartParserListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitStateclass(DartParser.StateclassContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterClasses(DartParser.ClassesContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitClasses(DartParser.ClassesContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterRegularclass(DartParser.RegularclassContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitRegularclass(DartParser.RegularclassContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterControllerClass(DartParser.ControllerClassContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitControllerClass(DartParser.ControllerClassContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

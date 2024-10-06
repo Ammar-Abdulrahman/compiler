@@ -32,5 +32,18 @@ public class Padding extends Node {
                 "\n}";
     }
 
+    @Override
+    public String generateCode() {
+        return "<div style='"+ "padding: "+num +
+                "px;'"+
+                ">"
+                +child.generateCode()
+                +"</div>" ;
+    }
 
+//    @Override
+//    public boolean generateCodeT() {
+//      //  this.generate = "<div padding>" +child.generate +"</div>";
+//        return true;
+//    }
 }

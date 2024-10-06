@@ -49,4 +49,9 @@ public class Expression extends Node {
                 ", \nnum=" + num +
                 "\n}";
     }
+
+    @Override
+    public String generateCode() {
+        return "";
+    }
 }

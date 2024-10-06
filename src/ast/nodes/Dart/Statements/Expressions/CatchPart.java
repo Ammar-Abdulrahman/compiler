@@ -21,4 +21,18 @@ public class CatchPart extends Node {
                 "\nvar=" + var +
                 "\n}";
     }
+
+    @Override
+    public String generateCode() {
+        int n = 0 ;
+        String x = "",y = "";
+        n = var.size();
+        if (n==0){
+            x = var.get(0);
+        }
+        if (n==1){
+            y = var.get(0) + "," + var.get(1);
+        }
+        return "catch (" + x + y + " )" ;
+    }
 }

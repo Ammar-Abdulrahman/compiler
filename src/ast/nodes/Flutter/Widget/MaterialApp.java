@@ -30,4 +30,11 @@ public class MaterialApp extends Node {
                 "\nmaterialTitle=" + title +
                 "\n}";
     }
+
+    @Override
+    public String generateCode() {
+        return "<title id="+title.getStringLine() +">"+
+                istedaaaclass.getVar()
+                + "</title>" ;
+    }
 }

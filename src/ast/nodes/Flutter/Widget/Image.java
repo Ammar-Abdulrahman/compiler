@@ -46,4 +46,10 @@ public class Image extends Node {
                 ", \nnum=" + num +
                 "\n}";
     }
+
+    @Override
+    public String generateCode() {
+
+       return "<img src="+stringLine +" style=' height:100px; width:100px;'>" ;
+    }
 }

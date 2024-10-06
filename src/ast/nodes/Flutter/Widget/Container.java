@@ -64,4 +64,27 @@ public class Container extends Node {
                 ", \nboxDecoration=" + boxDecoration +
                 "\n}";
     }
+
+    @Override
+    public String generateCode() {
+        if (color_value != null || width != null ) {
+            return "<div style='"+ " height: "+height.generateCode()+"; margin:10px"+
+                    " width: "+width.generateCode()+ ";" +
+                    " color: "+color_value+ ";"+
+                    "'"+
+                    ">"
+                    +child.generateCode()
+                    +"</div>";
+        }
+            return "<div style='"+ " height: "+height.generateCode()+"; margin:10px;"+
+                    "'"+
+                    ">"
+                +child.generateCode()
+                +"</div>";
+    }
 }
+
+
+//return "<div " + "height= " +"\""+ height.getNum()+"\"" + " width= " +"\""+"\"" + "> "
+//        +child.generateCode()
+//        +"</div>";

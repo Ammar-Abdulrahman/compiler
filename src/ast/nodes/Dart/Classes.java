@@ -50,4 +50,21 @@ public class Classes extends Node {
         }
         return null;
     }
+
+    @Override
+    public String generateCode() {
+        String x = "" , y = "" , z = "";
+        if(controllerClass != null) {
+            x =  controllerClass.generateCode();
+        }
+        if (regularClass != null){
+            y = regularClass.generateCode();
+        }
+        if (widgetClass != null){
+            z =  widgetClass.generateCode();
+        }
+        return   x+"\n"
+                +y+"\n"
+                +z+"\n";
+    }
 }

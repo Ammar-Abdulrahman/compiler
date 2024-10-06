@@ -1,33 +1,58 @@
 package SymbolTable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class FunSymbol extends Scope{
-    String key;
+    String type;
     String return_type;
-    ArrayList<VarSymbol> varSymbols;
 
-    public String getKey() {
-        return key;
-    }
+    public  class ParameterSymbol{
+        String type;
+        String name;
 
-    public void setKey(String key) {
-        this.key = key;
-    }
-
-    public ArrayList<VarSymbol> getVarSymbols() {
-        return varSymbols;
-    }
-
-    public void setVarSymbols(ArrayList<VarSymbol> varSymbols) {
-        this.varSymbols = varSymbols;
-    }
-
-
-    public String print(){
-        if(varSymbols != null){
-            return ("Key: " + this.key + ", Return Type: " + return_type + ", Variables: " + varSymbols + "\n");
+        public String getType() {
+            return type;
         }
-        return ("Key: " + this.key + ", Return Type: " + return_type + "\n");
+
+        public void setType(String type) {
+            this.type = type;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+    }
+    HashMap<String,ParameterSymbol> parameters = new HashMap<>();
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public HashMap<String, ParameterSymbol> getParameters() {
+        return parameters;
+    }
+
+    public void setParameters(HashMap<String, ParameterSymbol> parameters) {
+        this.parameters = parameters;
+    }
+
+
+
+    public String getReturn_type() {
+        return return_type;
+    }
+
+    public void setReturn_type(String return_type) {
+        this.return_type = return_type;
     }
 }

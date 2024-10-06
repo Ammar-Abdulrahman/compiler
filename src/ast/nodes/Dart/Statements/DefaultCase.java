@@ -19,4 +19,9 @@ public class DefaultCase extends Node {
                 "\nstatement=" + statement +
                 "\n}";
     }
+
+    @Override
+    public String generateCode() {
+        return "default : " + statement.generateCode() + "break;" ;
+    }
 }

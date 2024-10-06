@@ -20,4 +20,9 @@ public class BuildFunction extends Node {
                 "\nwidget=" + widget +
                 "\n}";
     }
+
+    @Override
+    public String generateCode() {
+        return widget.generateCode();
+    }
 }

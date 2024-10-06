@@ -34,4 +34,9 @@ public class TryStatement extends Node {
                 " \nblock2= " + blocks.get(1) +
                 "\n}";
     }
+
+    @Override
+    public String generateCode() {
+        return "try " + blocks.get(0) + "\n" +catchPart.generateCode() + blocks.get(1);
+    }
 }

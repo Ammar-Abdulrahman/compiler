@@ -172,4 +172,46 @@ public class Statement extends Node {
         }
         return null;
     }
+
+    @Override
+    public String generateCode() {
+        String whilee="",iff="",change="",swi="", tri="" ,blo ="" , pr ="" , nav ="" , stat="" ,exp ="" , expres ="" , contAtt  = "" , contFunc ="";
+        if(whileStatement != null){
+            whilee = whileStatement.generateCode();
+        }
+        if ( ifStatement != null){
+            iff = ifStatement.generateCode();
+        }
+        if (switchStatement != null){
+            swi = switchStatement.generateCode();
+        }
+        if (tryStatement != null){
+           tri = tryStatement.generateCode();
+        }
+        if (block != null){
+            blo = block.generateCode();
+        }
+        if (print != null){
+            pr = print.generateCode();
+        }
+        if (navigation != null){
+            nav = navigation.generateCode();
+        }
+        if(expr != null){
+            exp = expr.generateCode();
+        }
+        if (expression != null){
+            expres = expression.generateCode();
+        }
+        if (changingValue != null){
+            change = changingValue.generateCode() + "\n";
+        }
+        if (controllerFunctions != null){
+            contFunc = controllerFunctions.generateCode();
+        }
+        if (controllerAttributes != null){
+            contAtt = controllerAttributes.generateCode();
+        }
+        return  whilee+iff+swi+tri+blo+pr+nav+exp+expres+change+contFunc+contAtt;
+    }
 }

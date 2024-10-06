@@ -1,4 +1,6 @@
 package ast.Visitors;
+
+import ErrorHandling.SemanticError;
 import SymbolTable.*;
 import antlr.DartParser;
 import antlr.DartParserBaseVisitor;
@@ -12,19 +14,22 @@ import ast.nodes.Dart.Statements.Print;
 import ast.nodes.Flutter.*;
 import ast.nodes.Flutter.Widget.*;
 import org.antlr.v4.runtime.Token;
+
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.Stack;
-import Main.Program;
-public class BaseVisitor extends DartParserBaseVisitor {
-    int level = 1;
-    int id = 0;
-    Stack scope = new Stack();
-    ArrayList scopes = new ArrayList();
-    HashMap<String , ClassSymbol> classMap = new HashMap<String , ClassSymbol>();
-    private HashMap<String , FunSymbol> funSymbols = new HashMap<String , FunSymbol>();
-    SymbolTable symbolTable = new SymbolTable();
 
+import Main.Program;
+
+public class BaseVisitor extends DartParserBaseVisitor {
+    int level;
+    int id = 0;
+    Stack<Scope> scopeStack = new Stack<>();
+    ArrayList<Scope> scopes = new ArrayList<>();
+    public SemanticError semanticError = new SemanticError();
 
     //________________________________________________________________
     @Override
@@ -38,44 +43,78 @@ public class BaseVisitor extends DartParserBaseVisitor {
         }
         prog.setWidgetClass(visitWidgetclass(ctx.widgetclass()));
         prog.setMain1(visitMain(ctx.main()));
-        symbolTable.setSymbols(classMap);
-        symbolTable.print();
-        System.out.println("\n");
+        Program.symbolTable.setScopes(scopes);
+        SymbolTable.nodes1.add(prog);
+        if (semanticError.messages.isEmpty())
+        {
+            for (int m=0 ; m<classes.size() ; m++){
+                try {
+                FileWriter fileWriterHtml = new FileWriter("Files//file_"+ (m+5) + ".php");
+
+                fileWriterHtml.write("<html>\n");
+                    fileWriterHtml.write("\n"+classes.get(m).generateCode());
+                fileWriterHtml.write("\n</html>");
+                fileWriterHtml.close();
+
+            } catch (IOException e) {
+                System.out.println("An error occurred.");
+                e.printStackTrace();
+            }
+            }
+        }
+
         return prog;
     }
 
     @Override
     public Main visitMain(DartParser.MainContext ctx) {
-        Scope scope1 = new Scope();
-        ClassSymbol classSymbol = new ClassSymbol();
-        scope1.setLevel(level);
-        scope1.setId(id);
-        scope.push(scope1);
-        scopes.add(scope1);
-        classSymbol.setKey("main");
-        ArrayList<VarSymbol> varSymbols = new ArrayList<VarSymbol>();
+        HashMap<String, VarSymbol> varSymbols = new HashMap<>();
+        HashMap<String, ListSymbol> listSymbols = new HashMap<>();
         Main main = new Main();
         main.setLine(ctx.MAIN().getSymbol().getLine());
         main.setCol(ctx.MAIN().getSymbol().getCharPositionInLine());
         ArrayList<Declare> declares = new ArrayList<>();
+        ArrayList<Statement> statements = new ArrayList<>();
         main.setType(visitType(ctx.type()));
         main.setRunAppFunction(visitRunappfunction(ctx.runappfunction()));
+
+        FunSymbol mainSymbol = new FunSymbol();
+        mainSymbol.setKey("main");
+        mainSymbol.setType(main.getType().getType());
         if (ctx.declare() != null) {
             for (int i = 0; i < ctx.declare().size(); i++) {
-                VarSymbol varSymbol = new VarSymbol();
                 declares.add(visitDeclare(ctx.declare().get(i)));
-                varSymbol.setKey(declares.get(i).getDefineVariable().getVar());
-                varSymbol.setType(declares.get(i).getDefineVariable().getType().getType());
-                varSymbol.setValue(declares.get(i).getDefineVariable().getValue());
-                varSymbols.add(varSymbol);
-                // TODO check
-//                System.out.println("Variables: \n" + varSymbol.print());
+                //TODO: check for duplicate declarations
+                semanticError.DuplicatedDeclare(declares.get(i), varSymbols, listSymbols);
             }
             main.setDeclares(declares);
-            classSymbol.setVarSymbols(varSymbols);
-            classMap.put(classSymbol.getKey(),classSymbol);
         }
-        scope.pop();
+        if (ctx.statement() != null) {
+            for (int i = 0; i < ctx.statement().size(); i++) {
+                statements.add(visitStatement(ctx.statement().get(i)));
+                //TODO: check if the variable is not declared
+                semanticError.NewDeclare(statements.get(i), varSymbols);
+            }
+            main.setStatements(statements);
+        }
+        mainSymbol.setVarSymbol(varSymbols);
+        mainSymbol.setListSymbolHashMap(listSymbols);
+        Program.symbolTable.setMain(mainSymbol);
+
+//        {
+//            try {
+//                FileWriter fileWriterHtml = new FileWriter("Files//file_main22" + ".html");
+//
+//                fileWriterHtml.write("<html>\n");
+//                fileWriterHtml.write("\n"+ main.generateCode());
+//                fileWriterHtml.write("\n</html>");
+//                fileWriterHtml.close();
+//
+//            } catch (IOException e) {
+//                System.out.println("An error occurred.");
+//                e.printStackTrace();
+//            }
+//        }
         return main;
     }
 
@@ -88,75 +127,177 @@ public class BaseVisitor extends DartParserBaseVisitor {
         if (ctx.stlessclass() != null) {
             widgetClass.setStlessClass(visitStlessclass(ctx.stlessclass()));
         }
+
+//        {
+//            try {
+//                FileWriter fileWriterHtml = new FileWriter("Files//file_widget22"+ ".html");
+//
+//                fileWriterHtml.write("<html>\n");
+//                fileWriterHtml.write("\n"+ widgetClass.generateCode());
+//                fileWriterHtml.write("\n</html>");
+//                fileWriterHtml.close();
+//
+//            } catch (IOException e) {
+//                System.out.println("An error occurred.");
+//                e.printStackTrace();
+//            }
+//        }
         return widgetClass;
     }
 
     @Override
     public StfulClass visitStfulclass(DartParser.StfulclassContext ctx) {
+        level = 1;
+        ClassSymbol classSymbol = new ClassSymbol();
+        HashMap<String, VarSymbol> varSymbols = new HashMap<>();
+        HashMap<String, ListSymbol> listSymbols = new HashMap<>();
+        HashMap<String, FunSymbol> funSymbols = new HashMap<>();
+        classSymbol.setId(id++);
+        classSymbol.setLevel(level);
+        scopeStack.push(classSymbol);
+
         StfulClass stfulClass = new StfulClass();
         ArrayList<Def> defs = new ArrayList<>();
+        stfulClass.setVar(ctx.VARIABLE().toString());
+        stfulClass.setLine(ctx.CLAS().getSymbol().getLine());
+        CreateState createState = visitCreatestate(ctx.createstate());
+        StateClass stateClass = visitStateclass(ctx.stateclass());
+        Constructor constructor;
+        ArrayList<CallFunction> callFunction = new ArrayList<>();
+        stfulClass.setCreateState(createState);
+        stfulClass.setStateClass(stateClass);
+        classSymbol.setKey(stfulClass.getVar());
+        //TODO: check for duplicated classes
+        semanticError.DuplicateClass(scopes, classSymbol, stfulClass.getLine());
         if (ctx.constructor() != null) {
-            stfulClass.setConstructor(visitConstructor(ctx.constructor()));
+            constructor = visitConstructor(ctx.constructor());
+            stfulClass.setConstructor(constructor);
+            constructor = visitConstructor(ctx.constructor());
+            if (!Objects.equals(constructor.getVars().get(0), stfulClass.getVar())) {
+                throw new RuntimeException("error in line " +
+                        constructor.getLine()
+                        + " the constructor is invalid");
+            }
         }
         if (ctx.def() != null) {
             for (int i = 0; i < ctx.def().size(); i++) {
                 defs.add(visitDef(ctx.def().get(i)));
+                if (defs.get(i).getDeclare() != null) {
+                    //TODO: check for duplicate declarations
+                    semanticError.DuplicatedDeclare(defs.get(i).getDeclare(),
+                            varSymbols, listSymbols);
+                }
+                if (defs.get(i).getFunction() != null) {
+                    scopeStack.peek().setVarSymbol(varSymbols);
+                    scopeStack.peek().setListSymbolHashMap(listSymbols);
+                    //TODO: check for duplicate function
+                    semanticError.FunctionDeclared(defs.get(i), funSymbols);
+                }
             }
             stfulClass.setDef(defs);
+            classSymbol.setVarSymbol(varSymbols);
+            classSymbol.setListSymbolHashMap(listSymbols);
+            classSymbol.setFunSymbols(funSymbols);
         }
-        stfulClass.setCreateState(visitCreatestate(ctx.createstate()));
-        stfulClass.setStateClass(visitStateclass(ctx.stateclass()));
-        stfulClass.setVar(ctx.VARIABLE().toString());
-        //        Swidth swidth = new Swidth();
-//        swidth.setKey("StateFul class");
-//        swidth.setValue((ctx.VARIABLE().toString()));
-//        symbolTable.setSwidth(swidth);
+
+        if (ctx.callfunction() != null) {
+            for (int i = 0; i < ctx.callfunction().size(); i++) {
+                callFunction.add(visitCallfunction(ctx.callfunction().get(i)));
+                //TODO: check that the called function is defined
+                semanticError.CallNotDefinedFunction(classSymbol, callFunction.get(i));
+                //TODO: check that the called function parameters are defined
+                semanticError.FunctionParameterNotDefined(varSymbols, callFunction.get(i));
+            }
+
+            stfulClass.setCallFunctions(callFunction);
+        }
+        stfulClass.setClassSymbol(classSymbol);
+        scopes.add(scopeStack.peek());
+        scopeStack.pop();
         return stfulClass;
     }
 
     @Override
     public StlessClass visitStlessclass(DartParser.StlessclassContext ctx) {
+        level = 1;
+        ClassSymbol classSymbol = new ClassSymbol();
+        classSymbol.setId(id++);
+        classSymbol.setLevel(level);
+        scopeStack.push(classSymbol);
+        HashMap<String, FunSymbol> funSymbols = new HashMap<>();
+
         StlessClass stlessClass = new StlessClass();
         stlessClass.setVar(ctx.VARIABLE().toString());
-        stlessClass.setStlessClassBody( visitStlessclassbody(ctx.stlessclassbody()));
-        //        Swidth swidth = new Swidth();
-        //        swidth.setKey("State less var");
-        //        swidth.setValue((ctx.VARIABLE().toString()));
-        //        //symbolTable.setSwidth(swidth);
-        //        Swidth swidth1 = new Swidth();
-        //        swidth1.setKey("State Class state");
-        //        swidth1.setValue((ctx.VARIABLE().toString()));
-        //        //symbolTable.setSwidth(swidth1);
+        stlessClass.setStlessClassBody(visitStlessclassbody(ctx.stlessclassbody()));
+        stlessClass.setLine(ctx.CLAS().getSymbol().getLine());
+        HashMap<String, VarSymbol> varSymbols = new HashMap<>();
+        HashMap<String, ListSymbol> listSymbols = new HashMap<>();
+        classSymbol.setKey(stlessClass.getVar());
+        //TODO: check for duplicated classes
+        semanticError.DuplicateClass(scopes, classSymbol, stlessClass.getLine());
+        if (stlessClass.getStlessClassBody().getDefs() != null) {
+            for (int i = 0; i < stlessClass.getStlessClassBody().getDefs().size(); i++) {
+                if (stlessClass.getStlessClassBody().getDefs().get(i).getDeclare() != null) {
+                    //TODO: check for duplicate declarations
+                    semanticError.DuplicatedDeclare(stlessClass.getStlessClassBody().getDefs().get(i).getDeclare(),
+                            varSymbols, listSymbols);
+                }
+                if (stlessClass.getStlessClassBody().getDefs().get(i).getFunction() != null) {
+                    scopeStack.peek().setVarSymbol(varSymbols);
+                    scopeStack.peek().setListSymbolHashMap(listSymbols);
+                    //TODO: check for duplicate function
+                    semanticError.FunctionDeclared(stlessClass.getStlessClassBody().getDefs().get(i), funSymbols);
+                }
+            }
+            classSymbol.setVarSymbol(varSymbols);
+            classSymbol.setListSymbolHashMap(listSymbols);
+            classSymbol.setFunSymbols(funSymbols);
+        }
+        if (stlessClass.getStlessClassBody().getCallFunctions() != null) {
+            for (int i = 0; i < stlessClass.getStlessClassBody().getCallFunctions().size(); i++) {
+                //TODO: check that the called function is defined
+                semanticError.CallNotDefinedFunction(classSymbol, stlessClass.getStlessClassBody().getCallFunctions().get(i));
+                //TODO: check that the called function parameters are defined
+                semanticError.FunctionParameterNotDefined(varSymbols, stlessClass.getStlessClassBody().getCallFunctions().get(i));
+            }
+        }
+        stlessClass.setClassSymbol(classSymbol);
+        scopes.add(scopeStack.peek());
+        scopeStack.pop();
         return stlessClass;
     }
 
     @Override
     public Constructor visitConstructor(DartParser.ConstructorContext ctx) {
         Constructor constructor = new Constructor();
+        constructor.setLine(ctx.VARIABLE().get(0).getSymbol().getLine());
         ArrayList<String> vars = new ArrayList<>();
         for (int i = 0; i < ctx.VARIABLE().size(); i++) {
             vars.add(ctx.VARIABLE().get(i).toString());
         }
         constructor.setVars(vars);
-        //        Swidth swidth = new Swidth();
-        //        swidth.setKey("Constructor");
-        //        swidth.setValue((ctx.VARIABLE().toString()));
-        //        symbolTable.setSwidth(swidth);
         return constructor;
     }
 
     @Override
     public Def visitDef(DartParser.DefContext ctx) {
         Def def = new Def();
+        Declare declare = new Declare();
+        Function function = new Function();
+        ControllerPutFind controllerPutFind = new ControllerPutFind();
         if (ctx.function() != null) {
-            def.setFunction(visitFunction(ctx.function()));
+            function = visitFunction(ctx.function());
         }
         if (ctx.declare() != null) {
-            def.setDeclare(visitDeclare(ctx.declare()));
+            declare = visitDeclare(ctx.declare());
+
         }
-        if(ctx.controllerPutFind() != null) {
-            def.setControllerPutFind(visitControllerPutFind(ctx.controllerPutFind()));
+        if (ctx.controllerPutFind() != null) {
+            controllerPutFind = visitControllerPutFind(ctx.controllerPutFind());
         }
+        def.setFunction(function);
+        def.setDeclare(declare);
+        def.setControllerPutFind(controllerPutFind);
         return def;
     }
 
@@ -164,7 +305,7 @@ public class BaseVisitor extends DartParserBaseVisitor {
     public CreateState visitCreatestate(DartParser.CreatestateContext ctx) {
         CreateState createState = new CreateState();
         ArrayList<String> vars = new ArrayList<>();
-        for (int i = 0; i < vars.size(); i++) {
+        for (int i = 0; i < ctx.VARIABLE().size(); i++) {
             vars.add(ctx.VARIABLE().get(i).toString());
         }
         createState.setVars(vars);
@@ -175,38 +316,46 @@ public class BaseVisitor extends DartParserBaseVisitor {
     public StateClass visitStateclass(DartParser.StateclassContext ctx) {
         StateClass stateClass = new StateClass();
         ArrayList<Def> defs = new ArrayList<>();
-        stateClass.setBuildFunction( visitBuildfunction(ctx.buildfunction()));
+        ArrayList<String> vars = new ArrayList<>();
+        stateClass.setBuildFunction(visitBuildfunction(ctx.buildfunction()));
         if (ctx.def() != null) {
             for (int i = 0; i < ctx.def().size(); i++) {
                 defs.add(visitDef(ctx.def().get(i)));
             }
             stateClass.setDef(defs);
         }
-        stateClass.setVar(ctx.VARIABLE().toString());
-        //        Swidth swidth = new Swidth();
-        //        swidth.setKey("State Class var");
-        //        swidth.setValue((ctx.VARIABLE().toString()));
-        //        symbolTable.setSwidth(swidth);
+
+        for (int i = 0; i < ctx.VARIABLE().size(); i++) {
+            vars.add(ctx.VARIABLE().get(i).toString());
+        }
+        stateClass.setVars(vars);
+        //stateClass.setVar(ctx.VARIABLE().toString());
         return stateClass;
     }
 
     @Override
     public StlessClassBody visitStlessclassbody(DartParser.StlessclassbodyContext ctx) {
         StlessClassBody stlessClassBody = new StlessClassBody();
-        Constructor constructor = new Constructor();
+        Constructor constructor;
         ArrayList<Def> defs = new ArrayList<>();
-        BuildFunction buildFunction = new BuildFunction();
-        if(ctx.constructor() != null) {
-            constructor =visitConstructor(ctx.constructor());
+        BuildFunction buildFunction = visitBuildfunction(ctx.buildfunction());
+        ArrayList<CallFunction> callFunctions = new ArrayList<>();
+        stlessClassBody.setBuildFunction(buildFunction);
+        if (ctx.constructor() != null) {
+            constructor = visitConstructor(ctx.constructor());
             stlessClassBody.setConstructor(constructor);
         }
-        buildFunction =visitBuildfunction(ctx.buildfunction());
-        stlessClassBody.setBuildFunction(buildFunction);
         if (ctx.def() != null) {
             for (int i = 0; i < ctx.def().size(); i++) {
                 defs.add(visitDef(ctx.def().get(i)));
             }
             stlessClassBody.setDefs(defs);
+        }
+        if (ctx.callfunction() != null) {
+            for (int i = 0; i < ctx.callfunction().size(); i++) {
+                callFunctions.add(visitCallfunction(ctx.callfunction().get(i)));
+            }
+            stlessClassBody.setCallFunctions(callFunctions);
         }
         return stlessClassBody;
     }
@@ -214,49 +363,95 @@ public class BaseVisitor extends DartParserBaseVisitor {
     @Override
     public BuildFunction visitBuildfunction(DartParser.BuildfunctionContext ctx) {
         BuildFunction buildFunction = new BuildFunction();
-        Widget widget = new Widget();
-        widget = visitWidget(ctx.widget());
+        Widget widget = visitWidget(ctx.widget());
+        //SymbolTable.nodes1.add(widget);
         buildFunction.setWidget(widget);
         return buildFunction;
     }
 
     @Override
     public Function visitFunction(DartParser.FunctionContext ctx) {
+        FunSymbol funSymbol = new FunSymbol();
+        funSymbol.setId(scopeStack.peek().getId());
+        funSymbol.setLevel(scopeStack.peek().getLevel() + 1);
+        funSymbol.setParent(scopeStack.peek());
+        scopeStack.push(funSymbol);
         Function function = new Function();
         function.setType(visitType(ctx.type()));
         function.setVar(ctx.VARIABLE().get(0).toString());
+        function.setLine(ctx.VARIABLE().get(0).getSymbol().getLine());
         ArrayList<FunctionOnParameter> functionOnParameters = new ArrayList<>();
         ArrayList<Statement> statements = new ArrayList<>();
         ArrayList<Declare> declares = new ArrayList<>();
+
+        funSymbol.setKey(function.getVar());
+        funSymbol.setType(function.getType().getType());
+        HashMap<String, FunSymbol.ParameterSymbol> parameterSymbols = new HashMap<>();
+        HashMap<String, VarSymbol> varSymbols;
+        HashMap<String, ListSymbol> listSymbols;
+        varSymbols = funSymbol.getParent().getVarSymbol();
+        listSymbols = funSymbol.getParent().getListSymbolHashMap();
+
         if (ctx.functionparameter() != null) {
             for (int i = 0; i < ctx.functionparameter().size(); i++) {
                 functionOnParameters.add(visitFunctionparameter(ctx.functionparameter().get(i)));
+                for (int j = 0; j < ctx.functionparameter().size(); j++) {
+                    VarSymbol varSymbol = new VarSymbol();
+                    FunSymbol.ParameterSymbol parameterSymbol = funSymbol.new ParameterSymbol();
+                    parameterSymbol.setName(functionOnParameters.get(i).getVar().get(j));
+                    varSymbol.setKey(parameterSymbol.getName());
+                    parameterSymbol.setType(functionOnParameters.get(i).getTypes().get(j).getType());
+                    varSymbol.setType(parameterSymbol.getType());
+                    parameterSymbols.put(parameterSymbol.getName(), parameterSymbol);
+                    varSymbols.put(varSymbol.getKey(),varSymbol);
+                }
             }
             function.setFunctionOnParameters(functionOnParameters);
-        }
-        if (ctx.statement() != null) {
-            for (int i = 0; i < ctx.statement().size(); i++) {
-                statements.add(visitStatement(ctx.statement().get(i)));
-            }
-            function.setStatements(statements);
+            funSymbol.setParameters(parameterSymbols);
+
         }
         if (ctx.declare() != null) {
             for (int i = 0; i < ctx.declare().size(); i++) {
                 declares.add(visitDeclare(ctx.declare().get(i)));
+                //TODO: check for duplicate declarations
+                semanticError.DuplicatedDeclare(declares.get(i), varSymbols, listSymbols);
+                if (varSymbols != null)
+                    scopeStack.peek().setVarSymbol(varSymbols);
+                if (listSymbols != null)
+                    scopeStack.peek().setListSymbolHashMap(listSymbols);
+
             }
-            function.setDeclares(declares);
         }
-        if(ctx.NUM() != null) {
+        if (ctx.statement() != null) {
+            scopeStack.peek().setVarSymbol(varSymbols);
+            for (int i = 0; i < ctx.statement().size(); i++) {
+                statements.add(visitStatement(ctx.statement().get(i)));
+                //TODO: check if the variable is not declared
+                semanticError.NewDeclare(statements.get(i), varSymbols);
+            }
+            function.setStatements(statements);
+        }
+        if (ctx.NUM() != null) {
             function.setReturnType("int");
         } else if (ctx.VARIABLE().size() >= 2) {
-            String returnValue = ctx.VARIABLE().get(ctx.VARIABLE().size()-1).toString();
-            if(returnValue == "true" || returnValue == "false")
+            String returnValue = ctx.VARIABLE().get(ctx.VARIABLE().size() - 1).toString();
+            if (Objects.equals(returnValue, "true") || Objects.equals(returnValue, "false"))
                 function.setReturnType("boolean");
             else
                 function.setReturnType("String");
-        }
-        else
+        } else
             function.setReturnType("void");
+        funSymbol.setReturn_type(function.getReturnType());
+        //TODO: check if function returns same as its type
+        semanticError.FunctionReturnType(funSymbol, ctx);
+        if (varSymbols != null)
+            funSymbol.setVarSymbol(varSymbols);
+        if (listSymbols != null)
+            funSymbol.setListSymbolHashMap(listSymbols);
+        function.setFunSymbol(funSymbol);
+
+        scopes.add(scopeStack.peek());
+        scopeStack.pop();
         return function;
     }
     //________________________________________________________________
@@ -267,9 +462,9 @@ public class BaseVisitor extends DartParserBaseVisitor {
     public Widget visitWidget(DartParser.WidgetContext ctx) {
         Widget widget = new Widget();
         MaterialApp materialApp;
-        Button button ;
+        Button button;
         Image image;
-        Scaffold scaffold ;
+        Scaffold scaffold;
         Column column;
         Row row;
         Container container;
@@ -284,30 +479,37 @@ public class BaseVisitor extends DartParserBaseVisitor {
         if (ctx.materialapp() != null) {
             materialApp = visitMaterialapp(ctx.materialapp());
             widget.setMaterialApp(materialApp);
+            //SymbolTable.nodes1.add(materialApp);
         }
         if (ctx.button() != null) {
             button = visitButton(ctx.button());
             widget.setButton(button);
+            //SymbolTable.nodes1.add(button);
         }
         if (ctx.image() != null) {
             image = visitImage(ctx.image());
             widget.setImage(image);
+            //SymbolTable.nodes1.add(image);
         }
         if (ctx.scaffold() != null) {
             scaffold = visitScaffold(ctx.scaffold());
             widget.setScaffold(scaffold);
+            //SymbolTable.nodes1.add(scaffold);
         }
         if (ctx.column() != null) {
             column = visitColumn(ctx.column());
             widget.setColumn(column);
+            //SymbolTable.nodes1.add(column);
         }
         if (ctx.row() != null) {
             row = visitRow(ctx.row());
             widget.setRow(row);
+            //SymbolTable.nodes1.add(row);
         }
         if (ctx.container() != null) {
             container = visitContainer(ctx.container());
             widget.setContainer(container);
+            //SymbolTable.nodes1.add(container);
         }
         if (ctx.expanded() != null) {
             expanded = visitExpanded(ctx.expanded());
@@ -316,49 +518,56 @@ public class BaseVisitor extends DartParserBaseVisitor {
         if (ctx.padding() != null) {
             padding = visitPadding(ctx.padding());
             widget.setPadding(padding);
+            //SymbolTable.nodes1.add(padding);
         }
         if (ctx.center() != null) {
             center = visitCenter(ctx.center());
             widget.setCenter(center);
+            //SymbolTable.nodes1.add(center);
         }
         if (ctx.text() != null) {
             text = visitText(ctx.text());
             widget.setText(text);
+           // SymbolTable.nodes1.add(text);
+          //  System.out.println(text+"\n");
         }
         if (ctx.sizedbox() != null) {
             sizedBox = visitSizedbox(ctx.sizedbox());
             widget.setSizedBox(sizedBox);
+            //SymbolTable.nodes1.add(sizedBox);
         }
         if (ctx.obx() != null) {
             obx = visitObx(ctx.obx());
             widget.setObx(obx);
+            //SymbolTable.nodes1.add(obx);
         }
         if (ctx.icon() != null) {
             icon = visitIcon(ctx.icon());
             widget.setIcon(icon);
+            //SymbolTable.nodes1.add(icon);
         }
+
         return widget;
     }
 
     @Override
     public MaterialApp visitMaterialapp(DartParser.MaterialappContext ctx) {
         MaterialApp materialApp = new MaterialApp();
-        Istedaaaclass istedaaaclass = new Istedaaaclass();
-        if(ctx.materialtitle() != null) {
+        Istedaaaclass istedaaaclass;
+        if (ctx.materialtitle() != null) {
             materialApp.setTitle(visitMaterialtitle(ctx.materialtitle()));
         }
         istedaaaclass = visitIstedaaaclass(ctx.istedaaaclass());
-        //istedaaaclass.setLine(ctx.istedaaaclass());
         istedaaaclass.setCol(istedaaaclass.getCol());
         materialApp.setIstedaaaclass(istedaaaclass);
-        return materialApp ;
+        return materialApp;
     }
 
     @Override
     public Button visitButton(DartParser.ButtonContext ctx) {
         Button button = new Button();
         Child child;
-        child = (Child) visitChild(ctx.child());
+        child = visitChild(ctx.child());
         button.setChild(child);
         return button;
     }
@@ -366,31 +575,28 @@ public class BaseVisitor extends DartParserBaseVisitor {
     @Override
     public Image visitImage(DartParser.ImageContext ctx) {
         Image image = new Image();
-        if(ctx.STRING_LINE() != null) {
+        if (ctx.STRING_LINE() != null) {
             image.setStringLine(ctx.STRING_LINE().getText());
+         //   System.out.println(ctx.STRING_LINE().toString());
         }
         ArrayList<String> vars = new ArrayList<>();
         for (int i = 0; i < ctx.VARIABLE().size(); i++) {
             vars.add(ctx.VARIABLE().get(i).toString());
         }
         image.setVar(vars);
-        image.setLine(ctx.VARIABLE().get(0).getSymbol().getLine());
-        image.setCol(ctx.VARIABLE().get(0).getSymbol().getCharPositionInLine()+1);
+        //image.setLine(ctx.VARIABLE().get(0).getSymbol().getLine());
+        //image.setCol(ctx.VARIABLE().get(0).getSymbol().getCharPositionInLine() + 1);
         if (ctx.NUM() != null)
             image.setNum(Integer.parseInt(ctx.NUM().toString()));
-        //        Swidth swidth = new Swidth();
-//        swidth.setKey("Image");
-//        swidth.setValue((ctx.VARIABLE().toString()));
-//        symbolTable.setSwidth(swidth);
         return image;
     }
 
     @Override
     public Scaffold visitScaffold(DartParser.ScaffoldContext ctx) {
         Scaffold scaffold = new Scaffold();
-        Text texts = new Text();
-        Widget body = new Widget();
-        body =  visitWidget(ctx.widget());
+        Text texts;
+        Widget body;
+        body = visitWidget(ctx.widget());
         if (ctx.text() != null) {
             texts = visitText(ctx.text());
             scaffold.setTexts(texts);
@@ -412,7 +618,7 @@ public class BaseVisitor extends DartParserBaseVisitor {
         if (ctx.widget() != null) {
             ArrayList<Widget> widgets = new ArrayList<>();
             for (int i = 0; i < ctx.widget().size(); i++)
-                widgets.add((Widget) visitWidget(ctx.widget().get(i)));
+                widgets.add(visitWidget(ctx.widget().get(i)));
             column.setWidgets(widgets);
         }
 
@@ -440,7 +646,6 @@ public class BaseVisitor extends DartParserBaseVisitor {
     @Override
     public Container visitContainer(DartParser.ContainerContext ctx) {
         Container container = new Container();
-        BoxDecoration boxDecoration = new BoxDecoration();
         if (ctx.height() != null) {
             container.setHeight(visitHeight(ctx.height()));
         }
@@ -449,7 +654,7 @@ public class BaseVisitor extends DartParserBaseVisitor {
         }
         if (ctx.child() != null) {
             Child child;
-            child = (Child) visitChild(ctx.child());
+            child = visitChild(ctx.child());
             container.setChild(child);
         }
         if (ctx.COLORVALUE() != null) {
@@ -474,10 +679,6 @@ public class BaseVisitor extends DartParserBaseVisitor {
         Padding padding = new Padding();
         padding.setNum(ctx.num().getText());
         padding.setChild(visitChild(ctx.child()));
-        //        Swidth swidth = new Swidth();
-//        swidth.setKey("Padding num ");
-//        swidth.setValue((ctx.num().getText()));
-        //symbolTable.setSwidth(swidth);
         return padding;
     }
 
@@ -491,7 +692,7 @@ public class BaseVisitor extends DartParserBaseVisitor {
     @Override
     public Text visitText(DartParser.TextContext ctx) {
         Text text = new Text();
-        if(ctx.STRING_LINE() != null) {
+        if (ctx.STRING_LINE() != null) {
             text.setStringLine(ctx.STRING_LINE().getText());
         }
         ArrayList<String> vars = new ArrayList<>();
@@ -501,26 +702,21 @@ public class BaseVisitor extends DartParserBaseVisitor {
         }
         text.setVars(vars);
         text.setLine(ctx.VARIABLE().get(0).getSymbol().getLine());
-        text.setCol(ctx.VARIABLE().get(0).getSymbol().getCharPositionInLine()+1);
-        // System.out.println("text: col= " +text.getCol() +"\n line= " +text.getLine()+ "\n");
+        text.setCol(ctx.VARIABLE().get(0).getSymbol().getCharPositionInLine() + 1);
         if (ctx.NUM() != null) {
             for (int i = 0; i < ctx.NUM().size(); i++) {
                 numbers.add(Integer.parseInt(ctx.NUM().get(i).toString()));
             }
             text.setNums(numbers);
         }
-        //Swidth swidth = new Swidth();
-        //swidth.setKey("Text");
-        //swidth.setValue((ctx.VARIABLE().toString()));
-        //symbolTable.setSwidth(swidth);
         return text;
     }
 
     @Override
     public SizedBox visitSizedbox(DartParser.SizedboxContext ctx) {
         SizedBox sizedBox = new SizedBox();
-        Height height = new Height();
-        Width width = new Width();
+        Height height;
+        Width width;
         if (ctx.height() != null) {
             height = visitHeight(ctx.height());
             sizedBox.setHeight(height);
@@ -535,7 +731,7 @@ public class BaseVisitor extends DartParserBaseVisitor {
     @Override
     public Obx visitObx(DartParser.ObxContext ctx) {
         Obx obx = new Obx();
-        Widget widget = new Widget();
+        Widget widget;
         widget = visitWidget(ctx.widget());
         obx.setWidget(widget);
         return obx;
@@ -549,23 +745,23 @@ public class BaseVisitor extends DartParserBaseVisitor {
     }
     //________________________________________________________________
 
-    //statment________________________________________________________________
+    //statement________________________________________________________________
     @Override
     public Statement visitStatement(DartParser.StatementContext ctx) {
         Statement statement = new Statement();
-        WhileStatement whileStatement = new WhileStatement();
-        IfStatement ifStatement = new IfStatement();
-        SwitchStatement switchStatement = new SwitchStatement();
-        TryStatement tryStatement = new TryStatement();
-        Block block = new Block();
-        Print print = new Print();
-        Navigation navigation = new Navigation();
-        SetState state = new SetState();
-        Expr expr = new Expr();
-        Expression expression = new Expression();
-        ChangingValue changingValue = new ChangingValue();
-        ControllerFunctions controllerFunctions = new ControllerFunctions();
-        ControllerAttributes controllerAttributes = new ControllerAttributes();
+        WhileStatement whileStatement;
+        IfStatement ifStatement;
+        SwitchStatement switchStatement;
+        TryStatement tryStatement;
+        Block block;
+        Print print;
+        Navigation navigation;
+        SetState state;
+        Expr expr;
+        Expression expression;
+        ChangingValue changingValue;
+        ControllerFunctions controllerFunctions;
+        ControllerAttributes controllerAttributes;
         if (ctx.whileStatement() != null) {
             whileStatement = visitWhileStatement(ctx.whileStatement());
             statement.setWhileStatement(whileStatement);
@@ -624,40 +820,106 @@ public class BaseVisitor extends DartParserBaseVisitor {
 
     @Override
     public IfStatement visitIfStatement(DartParser.IfStatementContext ctx) {
+        Scope scope = new Scope();
+        scope.setId(scopeStack.peek().getId());
+        scope.setLevel(scopeStack.peek().getLevel() + 1);
+        scope.setParent(scopeStack.peek());
+        scope.setKey("If");
+        scopeStack.push(scope);
+        HashMap<String, VarSymbol> varSymbols;
+        HashMap<String, ListSymbol> listSymbols;
+        varSymbols = scope.getParent().getVarSymbol();
+        listSymbols = scope.getParent().getListSymbolHashMap();
         IfStatement ifStatement = new IfStatement();
         ArrayList<Expression> expressions = new ArrayList<>();
         ArrayList<Block> blocks = new ArrayList<>();
-        for(int i = 0; i < ctx.expression().size(); i++) {
+        for (int i = 0; i < ctx.expression().size(); i++) {
             expressions.add(visitExpression(ctx.expression().get(i)));
+            if (expressions.get(i).getVar() != null) {
+                if (!varSymbols.containsKey(expressions.get(i).getVar())){
+                    throw new RuntimeException("error in line: " + expressions.get(i).getLine() +  " variable not declared");
+                }
+            }
         }
         ifStatement.setExpressions(expressions);
 
-        for(int i = 0; i < ctx.block().size(); i++) {
+        for (int i = 0; i < ctx.block().size(); i++) {
             blocks.add(visitBlock(ctx.block().get(i)));
+            if (blocks.get(i).getDefs() != null) {
+                for (int j = 0; j < blocks.get(i).getDefs().size(); j++) {
+                    if (blocks.get(i).getDefs().get(j).getDeclare() != null) {
+                        //TODO: check for duplicate declarations
+                        semanticError.DuplicatedDeclare(blocks.get(i).getDefs().get(j).getDeclare(), varSymbols, listSymbols);
+                    }
+                }
+            }
+            if (blocks.get(i).getStatements() != null) {
+                for (int j = 0; j < blocks.get(i).getStatements().size(); j++){
+                    //TODO: check if the variable is not declared
+                    semanticError.NewDeclare(blocks.get(i).getStatements().get(j), varSymbols);
+                }
+            }
+        }
+        if (ctx.ANDOR()!= null){
+            ifStatement.setAndOr(ctx.ANDOR().toString());
         }
         ifStatement.setBlocks(blocks);
-
+        scope.setVarSymbol(varSymbols);
+        scopes.add(scopeStack.peek());
+        scopeStack.pop();
         return ifStatement;
     }
 
     @Override
     public WhileStatement visitWhileStatement(DartParser.WhileStatementContext ctx) {
+        Scope scope = new Scope();
+        scope.setId(scopeStack.peek().getId());
+        scope.setLevel(scopeStack.peek().getLevel() + 1);
+        scope.setParent(scopeStack.peek());
+        scope.setKey("While Loop");
+        scopeStack.push(scope);
+        HashMap<String, VarSymbol> varSymbols;
+        HashMap<String, ListSymbol> listSymbols;
+        varSymbols = scope.getParent().getVarSymbol();
+        listSymbols = scope.getParent().getListSymbolHashMap();
         WhileStatement whileStatement = new WhileStatement();
-        Block block = new Block();
-        Expression expression = new Expression();
+        Block block;
+        Expression expression;
         block = visitBlock(ctx.block());
         expression = visitExpression(ctx.expression());
         whileStatement.setBlock(block);
         whileStatement.setExpression(expression);
+        if (expression.getVar() != null) {
+            if (!varSymbols.containsKey(expression.getVar())){
+                throw new RuntimeException("error in line: " + expression.getLine() +  " variable not declared");
+            }
+        }
+        if (block.getDefs() != null) {
+            for (int j = 0; j < block.getDefs().size(); j++) {
+                if (block.getDefs().get(j).getDeclare() != null) {
+                    //TODO: check for duplicate declarations
+                    semanticError.DuplicatedDeclare(block.getDefs().get(j).getDeclare(), varSymbols, listSymbols);
+                }
+            }
+        }
+        if (block.getStatements() != null) {
+            for (int j = 0; j < block.getStatements().size(); j++){
+                //TODO: check if the variable is not declared
+                semanticError.NewDeclare(block.getStatements().get(j), varSymbols);
+            }
+        }
+        scope.setVarSymbol(varSymbols);
+        scopes.add(scopeStack.peek());
+        scopeStack.pop();
         return whileStatement;
     }
 
     @Override
     public SwitchStatement visitSwitchStatement(DartParser.SwitchStatementContext ctx) {
         SwitchStatement switchStatement = new SwitchStatement();
-        Expression expression = new Expression();
-        ArrayList<SwitchCase> switchCase = new ArrayList<SwitchCase>();
-        DefaultCase defaultCase = new DefaultCase();
+        Expression expression;
+        ArrayList<SwitchCase> switchCase = new ArrayList<>();
+        DefaultCase defaultCase;
         expression = visitExpression(ctx.expression());
         switchStatement.setExpression(expression);
         if (ctx.defaultCase() != null) {
@@ -665,7 +927,7 @@ public class BaseVisitor extends DartParserBaseVisitor {
             switchStatement.setDefaultCase(defaultCase);
         }
         if (ctx.switchCase() != null) {
-            for (int i = 0; i < switchCase.size(); i++) {
+            for (int i = 0; i < ctx.switchCase().size(); i++) {
                 switchCase.add(visitSwitchCase(ctx.switchCase().get(i)));
             }
             switchStatement.setSwitchCase(switchCase);
@@ -676,8 +938,8 @@ public class BaseVisitor extends DartParserBaseVisitor {
     @Override
     public TryStatement visitTryStatement(DartParser.TryStatementContext ctx) {
         TryStatement tryStatement = new TryStatement();
-        ArrayList<Block> blocks = new ArrayList<Block>();
-        CatchPart catchPart = new CatchPart();
+        ArrayList<Block> blocks = new ArrayList<>();
+        CatchPart catchPart;
         for (int i = 0; i < ctx.block().size(); i++) {
             blocks.add(visitBlock(ctx.block().get(i)));
         }
@@ -719,7 +981,7 @@ public class BaseVisitor extends DartParserBaseVisitor {
         if (ctx.VARIABLE() != null) {
             print.setVar(ctx.VARIABLE().getText());
         }
-        if(ctx.STRING_LINE() != null){
+        if (ctx.STRING_LINE() != null) {
             print.setStringLine(ctx.STRING_LINE().getText());
         }
         return print;
@@ -728,7 +990,7 @@ public class BaseVisitor extends DartParserBaseVisitor {
     @Override
     public Navigation visitNavigation(DartParser.NavigationContext ctx) {
         Navigation navigation = new Navigation();
-        Istedaaaclass istedaaaclass = new Istedaaaclass();
+        Istedaaaclass istedaaaclass;
         if (ctx.istedaaaclass() != null) {
             istedaaaclass = visitIstedaaaclass(ctx.istedaaaclass());
             navigation.setIstedaaaclass(istedaaaclass);
@@ -739,7 +1001,7 @@ public class BaseVisitor extends DartParserBaseVisitor {
     @Override
     public SetState visitSetstate(DartParser.SetstateContext ctx) {
         SetState state = new SetState();
-        SetBody setBody = new SetBody();
+        SetBody setBody;
         setBody = visitSetbody(ctx.setbody());
         state.setSetBody(setBody);
         return state;
@@ -748,12 +1010,16 @@ public class BaseVisitor extends DartParserBaseVisitor {
     @Override
     public Expr visitExpr(DartParser.ExprContext ctx) {
         Expr expr = new Expr();
-        ArrayList<String> vars = new ArrayList<String>();
+        ArrayList<String> vars = new ArrayList<>();
         ArrayList<Expr> child = new ArrayList<>();
         if (ctx.NUM() != null) {
             expr.setNum(Integer.parseInt(ctx.NUM().toString()));
+            expr.setLine(ctx.NUM().getSymbol().getLine());
         }
         if (ctx.VARIABLE() != null) {
+            if(ctx.VARIABLE(0) != null) {
+                expr.setLine(ctx.VARIABLE(0).getSymbol().getLine());
+            }
             for (int i = 0; i < ctx.VARIABLE().size(); i++) {
                 vars.add(ctx.VARIABLE(i).toString());
             }
@@ -775,11 +1041,12 @@ public class BaseVisitor extends DartParserBaseVisitor {
     @Override
     public Expression visitExpression(DartParser.ExpressionContext ctx) {
         Expression expression = new Expression();
-        Expression child = new Expression();
-        Expr expr = new Expr();
+        Expression child;
+        Expr expr;
         if (ctx.expression() != null) {
             child = visitExpression(ctx.expression());
             expression.setExpression(child);
+            expression.setLine(child.getLine());
         }
         if (ctx.expr() != null) {
             expr = visitExpr(ctx.expr());
@@ -787,22 +1054,38 @@ public class BaseVisitor extends DartParserBaseVisitor {
         }
         if (ctx.VARIABLE() != null) {
             expression.setVar(ctx.VARIABLE().getText());
+            expression.setLine(ctx.VARIABLE().getSymbol().getLine());
         }
         if (ctx.NUM() != null) {
             expression.setNum(Integer.parseInt(ctx.NUM().toString()));
+            expression.setLine(ctx.NUM().getSymbol().getLine());
+
         }
+
         return expression;
     }
 
     @Override
     public ChangingValue visitChangingvalue(DartParser.ChangingvalueContext ctx) {
         ChangingValue changingValue = new ChangingValue();
-        Expr expr = new Expr();
+        changingValue.setVar(ctx.VARIABLE().getText());
+        changingValue.setLine(ctx.VARIABLE().getSymbol().getLine());
+        Expr expr;
+        VarSymbol varSymbol = new VarSymbol();
         if (ctx.expr() != null) {
             expr = visitExpr(ctx.expr());
             changingValue.setExpr(expr);
+            if (!expr.getVar().isEmpty()) {
+                varSymbol.setValue(expr.getVar().get(0));
+            } else {
+                varSymbol.setValue(expr.getNum());
+            }
+        } else if (ctx.STRING_LINE() != null) {
+            changingValue.setString_line(ctx.STRING_LINE().toString());
+            varSymbol.setValue(changingValue.getString_line());
         }
-        changingValue.setVar(ctx.VARIABLE().getText());
+        varSymbol.setKey(changingValue.getVar());
+        changingValue.setVarSymbol(varSymbol);
         return changingValue;
     }
 
@@ -810,6 +1093,7 @@ public class BaseVisitor extends DartParserBaseVisitor {
     public ControllerAttributes visitControllerAttributes(DartParser.ControllerAttributesContext ctx) {
         ControllerAttributes controllerAttributes = new ControllerAttributes();
         ArrayList<String> vars = new ArrayList<>();
+
         if (ctx.VARIABLE() != null) {
             for (int i = 0; i < ctx.VARIABLE().size(); i++) {
                 vars.add(ctx.VARIABLE().get(i).toString());
@@ -822,12 +1106,15 @@ public class BaseVisitor extends DartParserBaseVisitor {
     @Override
     public ControllerFunctions visitControllerFunctions(DartParser.ControllerFunctionsContext ctx) {
         ControllerFunctions controllerFunctions = new ControllerFunctions();
-        ArrayList<String> vars = new ArrayList<String>();
+        ArrayList<String> vars = new ArrayList<>();
         if (ctx.VARIABLE() != null) {
             for (int i = 0; i < ctx.VARIABLE().size(); i++) {
                 vars.add(ctx.VARIABLE().get(i).toString());
             }
             controllerFunctions.setVars(vars);
+        }
+        if (ctx.NUM() != null){
+            controllerFunctions.setNum(Integer.parseInt(ctx.NUM().toString()));
         }
         return controllerFunctions;
     }
@@ -844,10 +1131,6 @@ public class BaseVisitor extends DartParserBaseVisitor {
     public Height visitHeight(DartParser.HeightContext ctx) {
         Height height = new Height();
         height.setNum(Integer.parseInt(ctx.NUM().toString()));
-        //        Sheight sheight = new Sheight();
-//        sheight.setKey("height");
-//        sheight.setValue(ctx.NUM().toString());
-//        symbolTable.setSheights(sheight);
         return height;
     }
 
@@ -864,13 +1147,7 @@ public class BaseVisitor extends DartParserBaseVisitor {
         istedaaaclass.setVar(ctx.VARIABLE().toString());
         Token id_token = ctx.VARIABLE().getSymbol();
         istedaaaclass.setLine(id_token.getLine());
-        istedaaaclass.setCol(id_token.getCharPositionInLine()+1);
-        //        variableSymbol.setKey("");
-        //System.out.println("col= " + istedaaaclass.getCol()+ "\nline= " + istedaaaclass.getLine() + "\n");
-//        Swidth swidth = new Swidth();
-//        swidth.setKey("Class var :");
-//        swidth.setValue((ctx.VARIABLE().toString()));
-//        symbolTable.setSwidth(swidth);
+        istedaaaclass.setCol(id_token.getCharPositionInLine() + 1);
         return istedaaaclass;
     }
 
@@ -884,8 +1161,8 @@ public class BaseVisitor extends DartParserBaseVisitor {
     @Override
     public SwitchCase visitSwitchCase(DartParser.SwitchCaseContext ctx) {
         SwitchCase switchCase = new SwitchCase();
-        Expression expression = new Expression();
-        Statement statement = new Statement();
+        Expression expression;
+        Statement statement;
         expression = visitExpression(ctx.expression());
         statement = visitStatement(ctx.statement());
         switchCase.setExpression(expression);
@@ -896,12 +1173,11 @@ public class BaseVisitor extends DartParserBaseVisitor {
     @Override
     public DefaultCase visitDefaultCase(DartParser.DefaultCaseContext ctx) {
         DefaultCase defaultCase = new DefaultCase();
-        Statement statement = new Statement();
+        Statement statement;
         statement = visitStatement(ctx.statement());
         defaultCase.setStatement(statement);
         return defaultCase;
     }
-
 
     @Override
     public CatchPart visitCatchPart(DartParser.CatchPartContext ctx) {
@@ -917,17 +1193,17 @@ public class BaseVisitor extends DartParserBaseVisitor {
     @Override
     public Type visitType(DartParser.TypeContext ctx) {
         Type type = new Type();
-        if(ctx.BOOL() != null) {
-            type.setType( ctx.BOOL().getText());
+        if (ctx.BOOL() != null) {
+            type.setType(ctx.BOOL().getText());
         }
-        if(ctx.INT() != null){
-            type.setType( ctx.INT().getText() );
+        if (ctx.INT() != null) {
+            type.setType(ctx.INT().getText());
         }
-        if(ctx.STRING() != null){
-            type.setType( ctx.STRING().getText() );
+        if (ctx.STRING() != null) {
+            type.setType(ctx.STRING().getText());
         }
-        if(ctx.VOID() != null){
-            type.setType( ctx.VOID().getText() );
+        if (ctx.VOID() != null) {
+            type.setType(ctx.VOID().getText());
         }
         return type;
     }
@@ -936,7 +1212,7 @@ public class BaseVisitor extends DartParserBaseVisitor {
     public FunctionOnParameter visitFunctionparameter(DartParser.FunctionparameterContext ctx) {
         FunctionOnParameter functionOnParameter = new FunctionOnParameter();
         ArrayList<Type> types = new ArrayList<>();
-        for(int i = 0; i < ctx.type().size() ; i++) {
+        for (int i = 0; i < ctx.type().size(); i++) {
             types.add(visitType(ctx.type().get(i)));
         }
         functionOnParameter.setTypes(types);
@@ -953,32 +1229,42 @@ public class BaseVisitor extends DartParserBaseVisitor {
         DefineVariable defineVariable = new DefineVariable();
         defineVariable.setType(visitType(ctx.type()));
         defineVariable.setVar(ctx.VARIABLE().toString());
+        defineVariable.setLine(ctx.VARIABLE().getSymbol().getLine());
+
+        VarSymbol varSymbol = new VarSymbol();
+        varSymbol.setType(defineVariable.getType().getType());
+        varSymbol.setKey(defineVariable.getVar());
         if (ctx.NUM() != null) {
             defineVariable.setNum(Integer.parseInt(ctx.NUM().toString()));
-            defineVariable.setValue(ctx.NUM().getText());
+            defineVariable.setValue(defineVariable.getNum());
+            varSymbol.setValue(defineVariable.getNum());
+
         }
-        if(ctx.STRING_LINE() != null) {
+        if (ctx.STRING_LINE() != null) {
             defineVariable.setStringLine(ctx.STRING_LINE().getText());
-            defineVariable.setValue(ctx.STRING_LINE().getText());
+            defineVariable.setValue(defineVariable.getStringLine());
+            varSymbol.setValue(defineVariable.getStringLine());
         }
+        defineVariable.setVarSymbol(varSymbol);
         return defineVariable;
     }
 
     @Override
     public Declare visitDeclare(DartParser.DeclareContext ctx) {
         Declare declare = new Declare();
-        DefineRXvariable defineRXvariable = new DefineRXvariable();
-        DefineVariable defineVariable = new DefineVariable();
+        DefineRXvariable defineRXvariable;
+        DefineVariable defineVariable;
+        List list = new List();
         if (ctx.list() != null) {
-            List list = new List();
-            list = (List) visitList(ctx.list());
+            list = visitList(ctx.list());
             declare.setList(list);
         }
         if (ctx.definevariable() != null) {
-            defineVariable = (DefineVariable) visitDefinevariable(ctx.definevariable());
-            declare.setDefineVariable(defineVariable);}
+            defineVariable = visitDefinevariable(ctx.definevariable());
+            declare.setDefineVariable(defineVariable);
+        }
         if (ctx.defineRXvariable() != null) {
-            defineRXvariable = (DefineRXvariable) visitDefineRXvariable(ctx.defineRXvariable());
+            defineRXvariable = visitDefineRXvariable(ctx.defineRXvariable());
             declare.setDefineRXvariable(defineRXvariable);
         }
         return declare;
@@ -987,28 +1273,32 @@ public class BaseVisitor extends DartParserBaseVisitor {
     @Override
     public List visitList(DartParser.ListContext ctx) {
         List list = new List();
-        ArrayList<String> vars = new ArrayList<String>();
-        if(ctx.STRING_LINE() != null) {
-            for(int i = 0; i < ctx.STRING_LINE().size(); i++)
+        ArrayList<String> vars = new ArrayList<>();
+        ListSymbol listSymbol = new ListSymbol();
+        list.setVar(ctx.VARIABLE().toString());
+        listSymbol.setKey(list.getVar());
+        list.setLine(ctx.LIST().getSymbol().getLine());
+        if (ctx.STRING_LINE() != null) {
+            for (int i = 0; i < ctx.STRING_LINE().size(); i++)
                 vars.add(ctx.STRING_LINE().get(i).toString());
             list.setVars(vars);
+            listSymbol.setValues(list.getVars());
         }
-        list.setVar(ctx.VARIABLE().toString());
-        //        Swidth swidth = new Swidth();
-        //        swidth.setKey("List var");
-        //        swidth.setValue((ctx.VARIABLE().toString()));
+        list.setListSymbol(listSymbol);
         return list;
     }
 
     @Override
-    public Object visitDefineRXvariable(DartParser.DefineRXvariableContext ctx) {
+    public DefineRXvariable visitDefineRXvariable(DartParser.DefineRXvariableContext ctx) {
         DefineRXvariable defineRXvariable = new DefineRXvariable();
-        if (ctx.VARIABLE() != null) {
-            defineRXvariable.setVar(ctx.VARIABLE().toString());
-        }
-        if (ctx.NUM() != null) {
-            defineRXvariable.setNum(Integer.parseInt(ctx.NUM().toString()));
-        }
+        defineRXvariable.setVar(ctx.VARIABLE().toString());
+        defineRXvariable.setNum(Integer.parseInt(ctx.NUM().toString()));
+        defineRXvariable.setLine(ctx.RXINT().getSymbol().getLine());
+        VarSymbol varSymbol = new VarSymbol();
+        varSymbol.setType(ctx.RXINT().getText());
+        varSymbol.setKey(defineRXvariable.getVar());
+        varSymbol.setValue(ctx.NUM());
+        defineRXvariable.setVarSymbol(varSymbol);
         return defineRXvariable;
     }
 
@@ -1035,7 +1325,7 @@ public class BaseVisitor extends DartParserBaseVisitor {
         SetBody setBody = new SetBody();
         ArrayList<Statement> statements = new ArrayList<>();
         if (ctx.statement() != null) {
-            for (int i = 0; i < statements.size(); i++) {
+            for (int i = 0; i < ctx.statement().size(); i++) {
                 statements.add(visitStatement(ctx.statement().get(i)));
             }
             setBody.setStatements(statements);
@@ -1046,11 +1336,11 @@ public class BaseVisitor extends DartParserBaseVisitor {
     @Override
     public OnPressed visitOnpressed(DartParser.OnpressedContext ctx) {
         OnPressed onPressed = new OnPressed();
-        SetState state = new SetState();
-        ArrayList<Statement> statements = new ArrayList<Statement>();
+        SetState state;
+        ArrayList<Statement> statements = new ArrayList<>();
 
         if (ctx.statement() != null) {
-            for (int i = 0; i < statements.size(); i++) {
+            for (int i = 0; i < ctx.statement().size(); i++) {
                 statements.add(visitStatement(ctx.statement().get(i)));
             }
             onPressed.setStatements(statements);
@@ -1065,7 +1355,7 @@ public class BaseVisitor extends DartParserBaseVisitor {
     @Override
     public RunAppFunction visitRunappfunction(DartParser.RunappfunctionContext ctx) {
         RunAppFunction runAppFunction = new RunAppFunction();
-        Istedaaaclass istedaaaclass = new Istedaaaclass();
+        Istedaaaclass istedaaaclass;
         istedaaaclass = visitIstedaaaclass(ctx.istedaaaclass());
         runAppFunction.setIstedaaaclass(istedaaaclass);
         return runAppFunction;
@@ -1073,77 +1363,195 @@ public class BaseVisitor extends DartParserBaseVisitor {
 
     @Override
     public RegularClass visitRegularclass(DartParser.RegularclassContext ctx) {
+        level = 1;
+        ClassSymbol classSymbol = new ClassSymbol();
+        HashMap<String, VarSymbol> varSymbols = new HashMap<>();
+        HashMap<String, ListSymbol> listSymbols = new HashMap<>();
+        HashMap<String, FunSymbol> funSymbols = new HashMap<>();
+        classSymbol.setId(id++);
+        classSymbol.setLevel(level);
+        scopeStack.push(classSymbol);
         RegularClass regularClass = new RegularClass();
-
         ArrayList<Def> defs = new ArrayList<>();
+        Constructor constructor;
+        ArrayList<CallFunction> callFunction = new ArrayList<>();
+        regularClass.setVar(ctx.VARIABLE().get(0).toString());
+        regularClass.setLine(ctx.CLAS().getSymbol().getLine());
+        classSymbol.setKey(regularClass.getVar());
 
+        if (ctx.EXTENDS() != null) {
+            String extension = ctx.VARIABLE().get(1).toString();
+            int line = ctx.VARIABLE(1).getSymbol().getLine();
+
+            //TODO: check if the class extends from declared class
+            semanticError.ExtendsNotDeclaredClass(scopes, extension, line);
+        }
+
+        //TODO: check for duplicated classes
+        semanticError.DuplicateClass(scopes, classSymbol, regularClass.getLine());
         if (ctx.def() != null) {
-
             for (int i = 0; i < ctx.def().size(); i++) {
                 defs.add(visitDef(ctx.def().get(i)));
+                if (defs.get(i).getDeclare() != null) {
+                    //TODO: check for duplicate declarations
+                    semanticError.DuplicatedDeclare(defs.get(i).getDeclare(),
+                            varSymbols, listSymbols);
+
+                }
+                if (defs.get(i).getFunction() != null) {
+                    scopeStack.peek().setVarSymbol(varSymbols);
+                    scopeStack.peek().setListSymbolHashMap(listSymbols);
+                    //TODO check for duplicate function
+                    semanticError.FunctionDeclared(defs.get(i), funSymbols);
+                }
             }
-            regularClass.setDefs(defs);
+            classSymbol.setVarSymbol(varSymbols);
+            classSymbol.setListSymbolHashMap(listSymbols);
+            classSymbol.setFunSymbols(funSymbols);
+            if (ctx.constructor() != null) {
+                constructor = visitConstructor(ctx.constructor());
+                regularClass.setConstructor(constructor);
+                if (!Objects.equals(constructor.getVars().get(0), regularClass.getVar())) {
+                    throw new RuntimeException("error in line " +
+                            constructor.getLine()
+                            + " the constructor is invalid");
+                }
+            }
         }
-        if (ctx.constructor() != null) {
-            Constructor constructor = new Constructor();
-            constructor = (Constructor) visitConstructor(ctx.constructor());
-            regularClass.setConstructor(constructor);
+        regularClass.setDefs(defs);
+        if (ctx.callfunction() != null) {
+            for (int i = 0; i < ctx.callfunction().size(); i++) {
+                callFunction.add(visitCallfunction(ctx.callfunction().get(i)));
+                //TODO: check that the called function is defined
+                semanticError.CallNotDefinedFunction(classSymbol, callFunction.get(i));
+                //TODO: check that the called function parameters are defined
+                semanticError.FunctionParameterNotDefined(varSymbols, callFunction.get(i));
+            }
+            regularClass.setCallFunctions(callFunction);
         }
-        regularClass.setVar(ctx.VARIABLE().toString());
-        //        Swidth swidth = new Swidth();
-//        swidth.setKey("Regular Class var ");
-//        swidth.setValue((ctx.VARIABLE().toString()));
-//        symbolTable.setSwidth(swidth);
+        regularClass.setClassSymbol(classSymbol);
+        scopes.add(scopeStack.peek());
+        scopeStack.pop();
         return regularClass;
     }
 
     @Override
     public Classes visitClasses(DartParser.ClassesContext ctx) {
         Classes classes = new Classes();
+
         if (ctx.regularclass() != null) {
-            RegularClass regularClass = new RegularClass();
+            RegularClass regularClass;
             regularClass = visitRegularclass(ctx.regularclass());
             classes.setRegularClass(regularClass);
         }
         if (ctx.widgetclass() != null) {
-            WidgetClass widgetClass = new WidgetClass();
-            widgetClass =  visitWidgetclass(ctx.widgetclass());
+            WidgetClass widgetClass;
+            widgetClass = visitWidgetclass(ctx.widgetclass());
             classes.setWidgetClass(widgetClass);
         }
-        if(ctx.controllerClass() != null) {
-            ControllerClass controllerClass = new ControllerClass();
+        if (ctx.controllerClass() != null) {
+            ControllerClass controllerClass;
             controllerClass = visitControllerClass(ctx.controllerClass());
             classes.setControllerClass(controllerClass);
         }
+
+
+
         return classes;
     }
 
     @Override
     public ControllerClass visitControllerClass(DartParser.ControllerClassContext ctx) {
+        level = 1;
+        ClassSymbol classSymbol = new ClassSymbol();
+        HashMap<String, VarSymbol> varSymbols = new HashMap<>();
+        HashMap<String, ListSymbol> listSymbols = new HashMap<>();
+        HashMap<String, FunSymbol> funSymbols = new HashMap<>();
+        classSymbol.setId(id++);
+        classSymbol.setLevel(level);
+        scopeStack.push(classSymbol);
         ControllerClass controllerClass = new ControllerClass();
         ArrayList<Def> defs = new ArrayList<>();
-        Constructor constructor = new Constructor();
-        if(ctx.def() != null){
-            for(int i = 0; i<ctx.def().size() ; i++)
+        Constructor constructor;
+        ArrayList<CallFunction> callFunctions = new ArrayList<>();
+        controllerClass.setVariable(ctx.VARIABLE().toString());
+        controllerClass.setLine(ctx.CLAS().getSymbol().getLine());
+        classSymbol.setKey(controllerClass.getVariable());
+        //TODO: check for duplicate class
+        semanticError.DuplicateClass(scopes, classSymbol, controllerClass.getLine());
+        if (ctx.def() != null) {
+            for (int i = 0; i < ctx.def().size(); i++) {
                 defs.add(visitDef(ctx.def().get(i)));
-            controllerClass.setDef(defs);
+                if (defs.get(i).getDeclare() != null) {
+                    //TODO: check for duplicate declarations
+                    semanticError.DuplicatedDeclare(defs.get(i).getDeclare(),
+                            varSymbols, listSymbols);
+
+                }
+                if (defs.get(i).getFunction() != null) {
+                    scopeStack.peek().setVarSymbol(varSymbols);
+                    scopeStack.peek().setListSymbolHashMap(listSymbols);
+                    //TODO check for duplicate function
+                    semanticError.FunctionDeclared(defs.get(i), funSymbols);
+                }
+                controllerClass.setDef(defs);
+            }
+            classSymbol.setVarSymbol(varSymbols);
+            classSymbol.setListSymbolHashMap(listSymbols);
+            classSymbol.setFunSymbols(funSymbols);
+
         }
-        if(ctx.constructor() != null) {
+
+        if (ctx.constructor() != null) {
             constructor = visitConstructor(ctx.constructor());
             controllerClass.setConstructor(constructor);
+            if (!Objects.equals(constructor.getVars().get(0), controllerClass.getVariable())) {
+                throw new RuntimeException("error in line " +
+                        constructor.getLine()
+                        + " the constructor is invalid");
+            }
         }
+        if (ctx.callfunction() != null) {
+            for (int i = 0; i < ctx.callfunction().size(); i++) {
+                callFunctions.add(visitCallfunction(ctx.callfunction().get(i)));
+                //TODO: check that the called function is defined
+                semanticError.CallNotDefinedFunction(classSymbol, callFunctions.get(i));
+                //TODO: check that the called function parameters are defined
+                semanticError.FunctionParameterNotDefined(varSymbols, callFunctions.get(i));
+            }
+            controllerClass.setCallFunctions(callFunctions);
+        }
+
+        controllerClass.setClassSymbol(classSymbol);
+
+        scopes.add(scopeStack.peek());
+        scopeStack.pop();
         return controllerClass;
     }
 
     @Override
     public BoxDecoration visitBoxdecoration(DartParser.BoxdecorationContext ctx) {
         BoxDecoration boxdecoration = new BoxDecoration();
-        if (ctx.COLORVALUE() != null){
+        if (ctx.COLORVALUE() != null) {
             boxdecoration.setColor_value(ctx.COLORVALUE().getText());
             boxdecoration.setLine(ctx.COLORVALUE().getSymbol().getLine());
-            boxdecoration.setCol(ctx.COLORVALUE().getSymbol().getCharPositionInLine()+1);
+            boxdecoration.setCol(ctx.COLORVALUE().getSymbol().getCharPositionInLine() + 1);
         }
         return boxdecoration;
     }
 
+    @Override
+    public CallFunction visitCallfunction(DartParser.CallfunctionContext ctx) {
+        CallFunction callFunction = new CallFunction();
+        ArrayList<String> parameters = new ArrayList<>();
+        callFunction.setName(ctx.VARIABLE().get(0).toString());
+        callFunction.setLine(ctx.VARIABLE().get(0).getSymbol().getLine());
+        if (ctx.VARIABLE().size() > 1) {
+            for (int i = 1; i < ctx.VARIABLE().size(); i++) {
+                parameters.add(ctx.VARIABLE().get(i).toString());
+            }
+            callFunction.setParameters(parameters);
+        }
+        return callFunction;
+    }
 }

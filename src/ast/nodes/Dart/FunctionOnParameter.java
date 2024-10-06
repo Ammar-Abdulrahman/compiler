@@ -33,4 +33,16 @@ public class FunctionOnParameter extends Node {
                 "\nvar=" + var +
                 "\n}";
     }
+
+
+    @Override
+    public String generateCode() {
+        String x = "" ,  y = "" , z = "" ;
+        for (int i=0 ; i<types.size();i++) {
+            x = types.get(i).getType();
+            y = var.get(i);
+            z = z +  x + " " + y + "," ;
+        }
+        return z;
+    }
 }

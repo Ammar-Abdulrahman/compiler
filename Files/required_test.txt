@@ -1,12 +1,26 @@
 void main() {
   runApp(const MyApp());
-  int x = 0 ;
   int y = 890;
+  int z = 90;
   String w = "fdsadaf";
+  List<String> Names = [
+  "naser",
+  "lady",
+  "ali",
+  "muayyad",
+  ];
+  Rx<int> count=0.obs;
+  z=33;
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
+
+  void ali (int z , int y) {
+  int x =10;
+  int q =900;
+  q=8888;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -116,6 +130,7 @@ class _MyHomePageState extends State<MyHomePage> {
 class InProductScreen extends StatelessWidget {
   InProductScreen({Key? key}) : super(key: key);
   final appController=Get.find<AppController>();
+  int x = 0;
   @override
   Widget build(BuildContext context) {
     return  Scaffold(
@@ -141,7 +156,6 @@ class InProductScreen extends StatelessWidget {
 }
 
 class AppController extends GetxController{
-  int x = 978965;
   String name = "a";
   String image = 'https://picsum.photos/250?image=4';
   Rx<int> count=0.obs;
@@ -150,7 +164,7 @@ class AppController extends GetxController{
   "naser",
   "lady",
   "ali",
-  "ammar",
+  "muayyad",
   ];
 
   List<String> Images = [
@@ -159,14 +173,5 @@ class AppController extends GetxController{
   "https://picsum.photos/250?image=3",
   "https://picsum.photos/250?image=4"]
   ;
-
-  int setValues(int index){
-  name=Names[index];
-  int x = 0;
-  image=Images[index];
-  Get.to(InProductScreen());
-  return ;
-  }
-
 }
 

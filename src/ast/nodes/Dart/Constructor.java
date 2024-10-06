@@ -21,4 +21,16 @@ public class Constructor extends Node {
                 "\nvars=" + vars +
                 "\n}";
     }
+
+    @Override
+    public String generateCode() {
+        String x= "";
+        if (vars != null){
+            for (int i=0 ;i<vars.size(); i++){
+                x = x + vars.get(i);
+            }
+            return x + "();\n";
+        }
+        return "";
+    }
 }

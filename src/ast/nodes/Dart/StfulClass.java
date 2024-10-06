@@ -1,5 +1,6 @@
 package ast.nodes.Dart;
 
+import SymbolTable.ClassSymbol;
 import ast.nodes.Dart.Statements.Declare;
 import ast.nodes.Node;
 
@@ -11,6 +12,24 @@ public class StfulClass extends Node {
     private ArrayList<Def>defs = new ArrayList<>();
     private CreateState createState ;
     private StateClass stateClass;
+    ClassSymbol classSymbol;
+    ArrayList<CallFunction> callFunctions;
+
+    public ArrayList<CallFunction> getCallFunctions() {
+        return callFunctions;
+    }
+
+    public void setCallFunctions(ArrayList<CallFunction> callFunctions) {
+        this.callFunctions = callFunctions;
+    }
+
+    public ClassSymbol getClassSymbol() {
+        return classSymbol;
+    }
+
+    public void setClassSymbol(ClassSymbol classSymbol) {
+        this.classSymbol = classSymbol;
+    }
 
     public String getVar() {
         return var;
@@ -61,5 +80,28 @@ public class StfulClass extends Node {
                 ", \ncreateState=" + createState +
                 ", \nstateClass=" + stateClass +
                 "\n}";
+    }
+
+    @Override
+    public String generateCode() {
+        String x = "" , y = "" , z = "" , c = "";
+        if(defs != null){
+            for (int i=0 ; i<defs.size();i++ ){
+                x = x + defs.get(i).generateCode();
+            }
+        }
+        if (constructor != null){
+            y = constructor.generateCode();
+        }
+        if (callFunctions != null){
+            for (int i=0;i<callFunctions.size();i++){
+                z = z + callFunctions.get(i).generateCode();
+            }
+        }
+        if (stateClass != null){
+            c = stateClass.generateCode();
+        }
+        return "<?php \n " + x + y + z + "\n ?> \n"
+                + c +"\n" ;
     }
 }

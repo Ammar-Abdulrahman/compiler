@@ -1,5 +1,6 @@
 package ast.nodes.Dart;
 
+import SymbolTable.ListSymbol;
 import ast.nodes.Node;
 
 import java.util.ArrayList;
@@ -10,6 +11,16 @@ public class List extends Node {
 
     public ArrayList<String> getVars() {
         return vars;
+    }
+
+    ListSymbol listSymbol ;
+
+    public ListSymbol getListSymbol() {
+        return listSymbol;
+    }
+
+    public void setListSymbol(ListSymbol listSymbol) {
+        this.listSymbol = listSymbol;
     }
 
     public void setVars(ArrayList<String> vars) {
@@ -30,5 +41,19 @@ public class List extends Node {
                 "\nvar='" + var + '\'' +
                 "\nvars= "+ vars +
                 "\n}";
+    }
+
+    @Override
+    public String generateCode() {
+        String x = "";
+        String y = "";
+        if (var != null){
+            for (int i=0 ; i<vars.size() ; i++){
+                x = x + vars.get(i);
+                x = x + ",";
+            }
+            return "$"+var + " = " + "array(" + x + ")" + ";" + "\n" ;
+        }
+        return "";
     }
 }

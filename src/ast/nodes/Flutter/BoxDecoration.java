@@ -20,4 +20,12 @@ public class BoxDecoration extends Node {
                 "\ncolor_value='" + color_value + '\'' +
                 "\n}";
     }
+
+    @Override
+    public String generateCode() {
+        if(color_value != null){
+            return color_value;
+        }
+        return "";
+    }
 }

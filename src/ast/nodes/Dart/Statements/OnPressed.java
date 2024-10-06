@@ -10,7 +10,6 @@ public class OnPressed extends Node {
     SetState state;
 
 
-
     public ArrayList<Statement> getStatements() {
         return statements;
     }
@@ -33,5 +32,19 @@ public class OnPressed extends Node {
                 ", \nstatements=" + statements +
                 ", \nsetstate=" + state +
                 "\n}";
+    }
+
+    @Override
+    public String generateCode() {
+        String x = "" ;
+        if (statements != null){
+            for (int i=0;i<statements.size();i++){
+                x = x +statements.get(i).generateCode();
+            }
+        }
+        return  "() =>{\n"
+                +x
+                + "\n"
+                + "}" ;
     }
 }

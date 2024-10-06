@@ -3,6 +3,15 @@ package ast.nodes.Flutter.Widget;
 import ast.nodes.Node;
 
 public class Widget extends Node {
+    public Widget getChild() {
+        return child;
+    }
+
+    public void setChild(Widget child) {
+        this.child = child;
+    }
+
+    Widget child;
     private MaterialApp materialApp;
     private Button button;
     private Image image;
@@ -177,5 +186,54 @@ public class Widget extends Node {
                     ", \nicon=" + icon + "\n}";
         }
         return null;
+    }
+
+    @Override
+    public String generateCode() {
+        if (materialApp != null){
+            return ""+
+                    materialApp.generateCode();
+        } else if (button != null){
+            return ""+
+                    " \n" + button.generateCode()
+                    + "\n";
+        } else if (image != null){
+            return "\n"+image.generateCode()
+                     + "\n";
+        } else if (scaffold != null) {
+            return "" +
+                    "\n" + scaffold.generateCode()+ "\n";
+        } else if (column != null) {
+            return "" +
+                    "\n" + column.generateCode()+ "\n";
+        } else if (row != null) {
+            return "" +
+                    "\n" + row.generateCode() + "\n";
+        } else if (container != null) {
+            return "" +
+                    "\n" + container.generateCode() + "\n";
+        } else if (expanded != null) {
+            return "" +
+                    "\n" + expanded.generateCode() + "\n";
+        } else if (padding != null) {
+            return "" +
+                    "\n" + padding.generateCode() + "\n";
+        } else if (center != null) {
+            return "" +
+                    "\n" + center.generateCode() + "\n";
+        } else if (sizedBox != null) {
+            return "" +
+                    "\n" + sizedBox.generateCode() + "\n";
+        } if (text != null) {
+            return "\n" +
+                    "\n" + text.generateCode() + "\n";
+        } else if (obx != null) {
+            return "" +
+                    " \n" + obx.generateCode() + "\n";
+        } else if (icon != null) {
+            return "" +
+                    "\n" + icon.generateCode() + "\n";
+        }
+        return "";
     }
 }

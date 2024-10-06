@@ -1,8 +1,10 @@
 package ast.nodes.Dart.Statements.Expressions;
+import ast.nodes.Node;
+
 import java.util.ArrayList;
 import java.util.List;
 
-public class Expr {
+public class Expr extends Node {
     private ArrayList<Expr> expr;
     private ArrayList<String> var;
     private int num;
@@ -42,9 +44,16 @@ public class Expr {
     @Override
     public String toString() {
         return "\nExpr{" +
-                "\nexpr=" + expr + "  " + expression +
+                "\nexpr=" + expr + "  " +
                 ", \nvar=" + var +
                 ", \nnum=" + num +
                 "\n}";
+    }
+
+    @Override
+    public String generateCode() {
+        if ( String.valueOf(num) != null )
+        return "$"+var+" = " + num+";" ;
+        return "";
     }
 }

@@ -41,4 +41,28 @@ public class Column extends Node {
                 ", \nwidgets=" + widgets +
                 "\n}";
     }
+
+    @Override
+    public String generateCode() {
+        String x = "" ;
+              for (int i=0;i<widgets.size();i++){
+                  x = x + widgets.get(i).generateCode() ;
+              }
+              if(cross != null && main_axis != null){
+                  return "<div style=' display:flex; flex-direction: column; " +
+                          "height: "+main_axis +";"+
+                          "width: "+cross+";"+
+                          "' >"+x+"</div>";
+              }else if (cross != null){
+                  return "<div style=' display:flex; flex-direction: column; " +
+                          "width: "+cross+";"+
+                          "' >"+x+"</div>";
+              }else if (main_axis != null){
+                  return "<div style=' display:flex; flex-direction: column; " +
+                          "height: "+main_axis +";"+
+                          "' >"+x+"</div>";
+              } else {
+                return "<div style=' display:flex; flex-direction: column; ' >"+x+"</div>";
+              }
+    }
 }

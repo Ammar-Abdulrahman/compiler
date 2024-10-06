@@ -19,4 +19,10 @@ public class Obx extends Node {
                 "\nwidget=" + widget +
                 "\n}";
     }
+    @Override
+    public String generateCode() {
+        return "<div obx>"
+                +widget.generateCode()
+                +"</div>" ;
+    }
 }

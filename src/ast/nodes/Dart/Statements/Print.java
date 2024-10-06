@@ -36,4 +36,15 @@ public class Print extends Node {
         return null;
     }
 
+    @Override
+    public String generateCode() {
+        String x = "" , y = "";
+        if (stringLine != null){
+            x = stringLine;
+        }
+        if (var != null){
+            y = var;
+        }
+        return "echo \"$" + x + y +"\";" ;
+    }
 }

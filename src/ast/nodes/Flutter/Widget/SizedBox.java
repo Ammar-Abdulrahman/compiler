@@ -31,4 +31,9 @@ public class SizedBox extends Node {
                 ", \nwidth=" + width +
                 "\n}";
     }
+
+    @Override
+    public String generateCode() {
+        return "";
+    }
 }
